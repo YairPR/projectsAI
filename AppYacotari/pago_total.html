@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body {
+        margin: 0;
+        padding: 34px;
+        color: #22341c;
+        font-family: "Trebuchet MS", Verdana, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(247, 203, 105, .24), transparent 24%),
+          linear-gradient(180deg, #fffaf0, #f8efdd);
+      }
+
+      .sheet {
+        position: relative;
+        overflow: hidden;
+        border-radius: 28px;
+        border: 1px solid rgba(34, 52, 28, .12);
+        background: rgba(255, 251, 243, .95);
+        padding: 28px;
+      }
+
+      .watermark {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .watermark img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 70%;
+        max-width: 520px;
+        transform: translate(-50%, -50%) rotate(-14deg);
+        opacity: .14;
+      }
+
+      .sheet-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .top {
+        display: table;
+        width: 100%;
+        border-bottom: 2px solid #e2b43b;
+        padding-bottom: 16px;
+        margin-bottom: 22px;
+      }
+
+      .left,
+      .right {
+        display: table-cell;
+        vertical-align: middle;
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        font-family: Georgia, serif;
+      }
+
+      h1 {
+        color: #2f4f20;
+        font-size: 30px;
+      }
+
+      h2 {
+        color: #8a6722;
+        font-size: 18px;
+        margin-top: 8px;
+      }
+
+      .logo {
+        width: 112px;
+        height: 112px;
+        object-fit: cover;
+        border-radius: 24px;
+        border: 1px solid rgba(34, 52, 28, .10);
+        background: #fff;
+      }
+
+      .muted {
+        margin-top: 6px;
+        color: #63725b;
+        font-size: 13px;
+      }
+
+      .grid {
+        display: table;
+        width: 100%;
+        margin-top: 14px;
+      }
+
+      .col {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+      }
+
+      .box {
+        margin-bottom: 16px;
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(34, 52, 28, .10);
+        background: rgba(255, 247, 229, .86);
+      }
+
+      .label {
+        margin-bottom: 5px;
+        color: #63725b;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+      }
+
+      .value {
+        margin-bottom: 10px;
+        font-size: 15px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: 18px;
+      }
+
+      th,
+      td {
+        border: 1px solid rgba(34, 52, 28, .10);
+        padding: 12px;
+        text-align: left;
+      }
+
+      th {
+        background: #f7e08f;
+        color: #2f4f20;
+      }
+
+      th:last-child,
+      td:last-child {
+        text-align: right;
+      }
+
+      .footer {
+        margin-top: 18px;
+        text-align: center;
+        font-size: 12px;
+        color: #66765f;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet" <? if (data.logoSrc) { ?>style="background-image:url('<?!= data.logoSrc ?>');background-repeat:no-repeat;background-position:center;background-size:68%;background-blend-mode:soft-light;"<? } ?>>
+      <? if (data.logoSrc) { ?>
+        <div class="watermark">
+          <img src="<?!= data.logoSrc ?>" alt="Marca de agua">
+        </div>
+      <? } ?>
+
+      <div class="sheet-content">
+        <div class="top">
+          <div class="left">
+            <h1><?= data.appTitle ?></h1>
+            <h2><?= data.moduleName ?> - <?= data.venueName ?></h2>
+            <div class="muted">Reserva: <?= data.reservationCode ?> - Comprobante: <?= data.receiptCode ?></div>
+            <div class="muted">Tipo de comprobante: <?= data.receiptTypeLabel ?></div>
+            <div class="muted">Fecha de emision: <?= data.issueDate ?></div>
+            <div class="muted">Arrendatario: <?= data.lessorName ?> - <?= data.lessorPhone ?></div>
+            <div class="muted">Recurso: <?= data.resourceName ?></div>
+          </div>
+          <div class="right">
+            <? if (data.logoSrc) { ?>
+              <img class="logo" src="<?!= data.logoSrc ?>">
+            <? } ?>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="col" style="padding-right:10px;">
+            <div class="box">
+              <div class="label">Cliente</div>
+              <div class="value"><?= data.nombre ?></div>
+
+              <div class="label">Documento</div>
+              <div class="value"><?= data.documento ?></div>
+
+              <div class="label">Telefono</div>
+              <div class="value"><?= data.telefono ?></div>
+            </div>
+          </div>
+
+          <div class="col" style="padding-left:10px;">
+            <div class="box">
+              <div class="label">Evento</div>
+              <div class="value"><?= data.tipoEvento ?></div>
+
+              <div class="label">Fecha y horario</div>
+              <div class="value"><?= data.fechaEvento ?> - <?= data.horario ?></div>
+
+              <div class="label">Personas</div>
+              <div class="value"><?= data.personas ?></div>
+            </div>
+          </div>
+        </div>
+
+        <table>
+          <tr>
+            <th>Concepto</th>
+            <th>Monto</th>
+          </tr>
+          <? if (data.receiptKind === 'reembolso') { ?>
+            <tr>
+              <td>Monto pagado por el cliente</td>
+              <td><?= data.currency ?> <?= Number(data.paidAmount).toFixed(2) ?></td>
+            </tr>
+            <tr>
+              <td>Porcentaje de devolucion</td>
+              <td><?= Number(data.refundPercent).toFixed(0) ?>%</td>
+            </tr>
+            <tr>
+              <td>Monto reembolsado</td>
+              <td><?= data.currency ?> <?= Number(data.refundedAmount).toFixed(2) ?></td>
+            </tr>
+          <? } else { ?>
+            <tr>
+              <td>Monto total</td>
+              <td><?= data.currency ?> <?= Number(data.montoTotal).toFixed(2) ?></td>
+            </tr>
+            <tr>
+              <td>Adelanto</td>
+              <td><?= data.currency ?> <?= Number(data.adelanto).toFixed(2) ?></td>
+            </tr>
+            <tr>
+              <td>Saldo pendiente</td>
+              <td><?= data.currency ?> <?= Number(data.saldo).toFixed(2) ?></td>
+            </tr>
+          <? } ?>
+        </table>
+
+        <div class="box" style="margin-top:16px;">
+          <div class="label">Metodo de pago</div>
+          <div class="value"><?= data.receiptKind === 'reembolso' ? 'Devolucion' : data.metodoPago ?></div>
+
+          <div class="label">Estado de pago</div>
+          <div class="value"><?= data.paymentStatus ?></div>
+
+          <? if (data.receiptKind === 'reembolso') { ?>
+            <div class="label">Motivo de cancelacion</div>
+            <div class="value"><?= data.cancellationReason || 'Cancelacion registrada' ?></div>
+          <? } ?>
+
+          <div class="label">Observaciones</div>
+          <div class="value"><?= data.observaciones || 'Sin observaciones' ?></div>
+        </div>
+
+        <div class="footer">
+          Gracias por confiar en <?= data.venueName ?>.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
