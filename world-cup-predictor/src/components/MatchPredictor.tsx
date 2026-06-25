@@ -4,6 +4,7 @@ import { teamsData } from '../data/teamsData';
 import type { ModelWeights, MatchBettingMarkets, MarketOption, LineupData } from '../utils/simulatorEngine';
 import { calculateMatchBettingMarkets, probToOdds } from '../utils/simulatorEngine';
 import { mockLineups } from '../data/lineupsMock';
+import { historicalMatches } from '../data/historicalMatches';
 import { 
   Sliders, Activity, AlertCircle, RefreshCw, 
   Search, ShieldAlert, Terminal
@@ -53,6 +54,11 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
 
   const t1 = teamsData.find(t => t.id === team1Id)!;
   const t2 = teamsData.find(t => t.id === team2Id)!;
+
+  const histMatch = historicalMatches.find(hm => 
+    (hm.homeTeamId === team1Id && hm.awayTeamId === team2Id) ||
+    (hm.homeTeamId === team2Id && hm.awayTeamId === team1Id)
+  );
 
   // Initialize lineups
   useEffect(() => {
@@ -488,6 +494,32 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
                   {marketsResults.teamA.name} ({marketsResults.probA}%) | Empate ({marketsResults.probDraw}%) | {marketsResults.teamB.name} ({marketsResults.probB}%)
                 </div>
               </div>
+
+              {histMatch && (
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.05)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                  marginTop: '0.25rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Análisis de Desviación Real (Post-Partido)
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'white', fontWeight: 600 }}>
+                    Este partido ya se disputó: {histMatch.winnerName === 'Empate' ? 'Terminó en empate' : `Ganó ${histMatch.winnerName}`} ({histMatch.homeTeamId === team1Id ? histMatch.homeGoals : histMatch.awayGoals} – {histMatch.homeTeamId === team1Id ? histMatch.awayGoals : histMatch.homeGoals})
+                  </div>
+                  <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: '1.55', margin: 0 }}>
+                    {histMatch.optaAnalysis}
+                  </p>
+                </div>
+              )}
 
               {/* Advanced Markets tabs */}
               <div>
