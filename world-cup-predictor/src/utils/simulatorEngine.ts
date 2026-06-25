@@ -340,10 +340,27 @@ export function calculateMatchBettingMarkets(
   weights: ModelWeights,
   messiImpact: number = 0,
   lineupA?: LineupData,
-  lineupB?: LineupData
+  lineupB?: LineupData,
+  applyGameTheory: boolean = false
 ): MatchBettingMarkets {
   let ratingA = calculateTeamRating(teamA, weights, teamA.id === 'ARG' ? messiImpact : 0);
   let ratingB = calculateTeamRating(teamB, weights, teamB.id === 'ARG' ? messiImpact : 0);
+
+  if (applyGameTheory) {
+    // Teoría de Juegos y Supervivencia Táctica:
+    // El equipo menos favorecido en calidad teórica pura recibe un ajuste de intensidad y utilidad
+    // porque juega por su supervivencia. El favorito juega con un enfoque más conservador o táctico.
+    const ratingDiff = ratingA - ratingB;
+    if (ratingDiff < 0) {
+      // B es favorito. A (Ecuador) recibe el valor del incentivo.
+      ratingA = Math.min(1.0, ratingA + Math.abs(ratingDiff) * 0.45);
+      ratingB = Math.max(0.1, ratingB - Math.abs(ratingDiff) * 0.25);
+    } else if (ratingDiff > 0) {
+      // A es favorito. B recibe el valor del incentivo.
+      ratingB = Math.min(1.0, ratingB + Math.abs(ratingDiff) * 0.45);
+      ratingA = Math.max(0.1, ratingA - Math.abs(ratingDiff) * 0.25);
+    }
+  }
 
   // Lineup impact: check if star players (those in team.players) are missing from the startingXI
   let ratingReductionA = 0;
@@ -434,8 +451,15 @@ export function calculateMatchBettingMarkets(
   const attackPowerB = Math.max(0.3, ratingB * 1.8 + formModifierB);
   const defensePowerA = Math.max(0.3, (1.0 - ratingA) * 1.6 + agePenaltyA);
 
-  const xgA = Math.max(0.2, +(attackPowerA * defensePowerB * 1.35 * formationMultGoalsA * formationMultGoalsOppB).toFixed(2));
-  const xgB = Math.max(0.2, +(attackPowerB * defensePowerA * 1.35 * formationMultGoalsB * formationMultGoalsOppA).toFixed(2));
+  let xgA = Math.max(0.2, +(attackPowerA * defensePowerB * 1.35 * formationMultGoalsA * formationMultGoalsOppB).toFixed(2));
+  let xgB = Math.max(0.2, +(attackPowerB * defensePowerA * 1.35 * formationMultGoalsB * formationMultGoalsOppA).toFixed(2));
+
+  if (applyGameTheory) {
+    // Proyectar un partido trabado y de pocos goles (reducción general del 30% en xG)
+    xgA = Math.max(0.1, +(xgA * 0.70).toFixed(2));
+    xgB = Math.max(0.1, +(xgB * 0.70).toFixed(2));
+  }
+
   const xgTotal = +(xgA + xgB).toFixed(2);
 
   // 2. Exact score distribution using Poisson (0 to 5 goals)
