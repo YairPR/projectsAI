@@ -31,13 +31,13 @@ export const KlementSimulator: React.FC<KlementSimulatorProps> = ({
 
   const resetWeights = () => {
     onWeightsChange({
-      fifaRank: 0.45,
-      gdp: 0.15,
-      population: 0.10,
-      climate: 0.08,
-      host: 0.12,
-      squadValue: 0.10,
-      luck: 0.25
+      fifaRank: 0.60,
+      squadValue: 0.25,
+      gdp: 0.03,
+      population: 0.02,
+      climate: 0.03,
+      host: 0.07,
+      luck: 0.15
     });
   };
 

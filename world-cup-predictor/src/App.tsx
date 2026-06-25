@@ -18,14 +18,15 @@ export default function App() {
   
   // Model weights state (defaults close to Joachim Klement's findings, with a 25% luck factor)
   const [weights, setWeights] = useState<ModelWeights>({
-    fifaRank: 0.45,
-    gdp: 0.15,
-    population: 0.10,
-    climate: 0.08,
-    host: 0.12,
-    squadValue: 0.10,
-    luck: 0.25
+    fifaRank: 0.60,
+    squadValue: 0.25,
+    gdp: 0.03,
+    population: 0.02,
+    climate: 0.03,
+    host: 0.07,
+    luck: 0.15
   });
+
 
   const [messiImpact, setMessiImpact] = useState<number>(0.5);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
