@@ -5,57 +5,28 @@ import type { ModelWeights, SimulationStats, GroupStanding } from './utils/simul
 import { runMonteCarloSimulation, simulateGroup } from './utils/simulatorEngine';
 import { Home } from './components/Home';
 import { Dashboard } from './components/Dashboard';
-import { KlementSimulator } from './components/KlementSimulator';
-import { BracketSimulator } from './components/BracketSimulator';
-import { PlayerProfile } from './components/PlayerProfile';
 import { MatchPredictor } from './components/MatchPredictor';
-import { BettingSlip } from './components/BettingSlip';
-import type { BetSelection } from './components/BettingSlip';
-import { Trophy, Sliders, GitPullRequest, Award, Percent, Home as HomeIcon } from 'lucide-react';
+import { Trophy, Percent, Home as HomeIcon } from 'lucide-react';
+
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'simulator' | 'bracket' | 'messi' | 'predictor'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'predictor'>('home');
   
-  // Model weights state (defaults close to Joachim Klement's findings, with a 25% luck factor)
-  const [weights, setWeights] = useState<ModelWeights>({
+  // Model weights state calibrated to represent 85% of rating weights (60% FIFA Rank, 25% Squad value)
+  // Luck / variance reduced to 15%. GDP/Population demographic weights set to 0.00 to prevent distortion.
+  const [weights] = useState<ModelWeights>({
     fifaRank: 0.60,
     squadValue: 0.25,
-    gdp: 0.03,
-    population: 0.02,
-    climate: 0.03,
-    host: 0.07,
+    gdp: 0.00,
+    population: 0.00,
+    climate: 0.05,
+    host: 0.10,
     luck: 0.15
   });
 
-
-  const [messiImpact, setMessiImpact] = useState<number>(0.5);
-  const [isSimulating, setIsSimulating] = useState<boolean>(false);
-  const [simulationProgress, setSimulationProgress] = useState<number>(0);
-  
   // Simulation results
   const [predictions, setPredictions] = useState<Record<string, SimulationStats>>({});
   const [groupStandings, setGroupStandings] = useState<Record<string, GroupStanding[]>>({});
-
-  // Betting Slip State
-  const [selections, setSelections] = useState<BetSelection[]>([]);
-  const [isSlipOpen, setIsSlipOpen] = useState<boolean>(false);
-
-  const handleAddSelection = (sel: BetSelection) => {
-    // Prevent duplicate selections of the same market type in the same match
-    setSelections(prev => {
-      const filtered = prev.filter(x => !(x.matchName === sel.matchName && x.marketType === sel.marketType));
-      return [...filtered, sel];
-    });
-  };
-
-  const handleRemoveSelection = (id: string) => {
-    setSelections(prev => prev.filter(x => x.id !== id));
-  };
-
-  const handleClearSelections = () => {
-    setSelections([]);
-    setIsSlipOpen(false);
-  };
 
   // Compute standings and initial predictions on load or weight change
   const computeInitialResults = () => {
@@ -67,53 +38,19 @@ export default function App() {
 
     const standings: Record<string, GroupStanding[]> = {};
     Object.keys(groups).forEach(g => {
-      standings[g] = simulateGroup(groups[g], weights, messiImpact);
+      standings[g] = simulateGroup(groups[g], weights, 0);
     });
     setGroupStandings(standings);
 
     if (Object.keys(predictions).length === 0) {
-      const initialPreds = runMonteCarloSimulation(weights, 500, messiImpact);
+      const initialPreds = runMonteCarloSimulation(weights, 500, 0);
       setPredictions(initialPreds);
     }
   };
 
-  const handleRunFullSimulation = async (iterations: number) => {
-    setIsSimulating(true);
-    setSimulationProgress(0);
-
-    setTimeout(() => {
-      try {
-        const results = runMonteCarloSimulation(weights, iterations, messiImpact, (progress) => {
-          setSimulationProgress(progress);
-        });
-        
-        setPredictions(results);
-        
-        const groups: Record<string, Team[]> = {};
-        teamsData.forEach(t => {
-          if (!groups[t.group]) groups[t.group] = [];
-          groups[t.group].push(t);
-        });
-        
-        const standings: Record<string, GroupStanding[]> = {};
-        Object.keys(groups).forEach(g => {
-          standings[g] = simulateGroup(groups[g], weights, messiImpact);
-        });
-        setGroupStandings(standings);
-
-      } catch (err) {
-        console.error('Error running Monte Carlo simulation:', err);
-      } finally {
-        setTimeout(() => {
-          setIsSimulating(false);
-        }, 300);
-      }
-    }, 100);
-  };
-
   useEffect(() => {
     computeInitialResults();
-  }, [weights, messiImpact]);
+  }, [weights]);
 
   return (
     <div className="app-container">
@@ -149,27 +86,6 @@ export default function App() {
             <Trophy size={16} />
             <span>Dashboard</span>
           </button>
-          <button 
-            className={`nav-tab ${activeTab === 'simulator' ? 'active' : ''}`}
-            onClick={() => setActiveTab('simulator')}
-          >
-            <Sliders size={16} />
-            <span>Simulador Econométrico</span>
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'bracket' ? 'active' : ''}`}
-            onClick={() => setActiveTab('bracket')}
-          >
-            <GitPullRequest size={16} />
-            <span>Llaves (Bracket)</span>
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'messi' ? 'active' : ''}`}
-            onClick={() => setActiveTab('messi')}
-          >
-            <Award size={16} />
-            <span>Perfil Messi (xG)</span>
-          </button>
         </nav>
       </header>
 
@@ -182,11 +98,6 @@ export default function App() {
         {activeTab === 'predictor' && (
           <MatchPredictor
             weights={weights}
-            messiImpact={messiImpact}
-            selections={selections}
-            onAddSelection={handleAddSelection}
-            onRemoveSelection={handleRemoveSelection}
-            onToggleSlip={() => setIsSlipOpen(true)}
           />
         )}
 
@@ -197,41 +108,7 @@ export default function App() {
             groupStandings={groupStandings} 
           />
         )}
-        
-        {activeTab === 'simulator' && (
-          <KlementSimulator
-            weights={weights}
-            onWeightsChange={setWeights}
-            onRunSimulation={handleRunFullSimulation}
-            predictions={predictions}
-            isSimulating={isSimulating}
-            simulationProgress={simulationProgress}
-          />
-        )}
-
-        {activeTab === 'bracket' && (
-          <BracketSimulator 
-            weights={weights} 
-            messiImpact={messiImpact} 
-          />
-        )}
-
-        {activeTab === 'messi' && (
-          <PlayerProfile 
-            messiImpact={messiImpact} 
-            onMessiImpactChange={setMessiImpact} 
-          />
-        )}
       </main>
-
-      {/* Floating Betting Slip */}
-      <BettingSlip
-        selections={selections}
-        onRemoveSelection={handleRemoveSelection}
-        onClearSelections={handleClearSelections}
-        isSlipOpen={isSlipOpen}
-        onToggleSlip={() => setIsSlipOpen(!isSlipOpen)}
-      />
 
       <footer className="footer">
         <p>© 2026 FIFA World Cup Predictor. Desarrollado con datos estadísticos de Opta y econométricos de Joachim Klement.</p>

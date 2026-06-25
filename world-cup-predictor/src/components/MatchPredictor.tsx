@@ -3,7 +3,6 @@ import type { Team, Player } from '../data/teamsData';
 import { teamsData } from '../data/teamsData';
 import type { ModelWeights, MatchBettingMarkets, MarketOption, LineupData } from '../utils/simulatorEngine';
 import { calculateMatchBettingMarkets, probToOdds } from '../utils/simulatorEngine';
-import type { BetSelection } from './BettingSlip';
 import { mockLineups } from '../data/lineupsMock';
 import { 
   Sliders, Activity, AlertCircle, RefreshCw, 
@@ -13,20 +12,10 @@ import {
 
 interface MatchPredictorProps {
   weights: ModelWeights;
-  messiImpact: number;
-  selections: BetSelection[];
-  onAddSelection: (sel: BetSelection) => void;
-  onRemoveSelection: (id: string) => void;
-  onToggleSlip: () => void;
 }
 
 export const MatchPredictor: React.FC<MatchPredictorProps> = ({
-  weights,
-  messiImpact,
-  selections,
-  onAddSelection,
-  onRemoveSelection,
-  onToggleSlip
+  weights
 }) => {
   const [team1Id, setTeam1Id] = useState<string>('ECU');
   const [team2Id, setTeam2Id] = useState<string>('GER');
@@ -105,7 +94,7 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
       t1,
       t2,
       customWeights,
-      messiImpact,
+      0,
       lineupA,
       lineupB
     );
@@ -174,32 +163,6 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
     setTeam2Id(id2);
   };
 
-  const isSelected = (selectionId: string) => {
-    const slipId = `${team1Id}_${team2Id}_${selectionId}`;
-    return selections.some(sel => sel.id === slipId);
-  };
-
-  const handleMarketOptionClick = (opt: MarketOption) => {
-    if (!marketsResults) return;
-
-    const slipId = `${team1Id}_${team2Id}_${opt.selectionId}`;
-    if (isSelected(opt.selectionId)) {
-      onRemoveSelection(slipId);
-    } else {
-      const newSel: BetSelection = {
-        id: slipId,
-        matchName: `${marketsResults.teamA.name} vs ${marketsResults.teamB.name}`,
-        selectionName: opt.n,
-        odds: opt.odds,
-        prob: opt.p,
-        marketType: opt.marketType,
-        selectionId: opt.selectionId
-      };
-      onAddSelection(newSel);
-      onToggleSlip();
-    }
-  };
-
   const renderMarketCard = (title: string, options: MarketOption[] | undefined) => {
     if (!options) return null;
 
@@ -208,26 +171,24 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
         <div className="market-title">{title}</div>
         <div className="market-options">
           {options.map(opt => {
-            const active = isSelected(opt.selectionId);
             return (
               <div
                 key={opt.selectionId}
-                className={`market-opt ${opt.best ? 'best' : ''} ${active ? 'active-bet' : ''}`}
-                onClick={() => handleMarketOptionClick(opt)}
+                className={`market-opt ${opt.best ? 'best' : ''}`}
                 style={{
-                  cursor: 'pointer',
-                  border: active ? '1px solid var(--accent-gold)' : '',
-                  background: active ? 'rgba(251, 191, 36, 0.12)' : ''
+                  border: opt.best ? '1px solid rgba(251, 191, 36, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
+                  background: opt.best ? 'rgba(251, 191, 36, 0.02)' : 'transparent',
+                  cursor: 'default'
                 }}
               >
                 <div>
-                  <div className="mname" style={{ color: active ? 'var(--accent-gold)' : 'var(--text-primary)' }}>
+                  <div className="mname" style={{ color: 'var(--text-primary)' }}>
                     {opt.n}
                   </div>
                   <div className="mprob">{opt.p}% · {opt.note || 'Prob'}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div className="modds" style={{ color: active ? '#ffffff' : 'var(--accent-gold)' }}>
+                  <div className="modds" style={{ color: 'var(--accent-gold)' }}>
                     {opt.odds}
                   </div>
                 </div>

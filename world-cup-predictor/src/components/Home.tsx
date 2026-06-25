@@ -1,8 +1,8 @@
 import React from 'react';
-import { Trophy, Sliders, GitPullRequest, Percent, ArrowRight, ShieldAlert } from 'lucide-react';
+import { Trophy, Percent, ArrowRight, ShieldAlert } from 'lucide-react';
 
 interface HomeProps {
-  onNavigate: (tab: 'dashboard' | 'simulator' | 'bracket' | 'messi' | 'predictor') => void;
+  onNavigate: (tab: 'dashboard' | 'predictor') => void;
 }
 
 export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
@@ -73,33 +73,8 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </div>
             <ChevronRightIcon />
           </div>
-
-          <div className="home-action-card glass-panel" onClick={() => onNavigate('simulator')}>
-            <div className="hac-icon bg-purple-glow text-purple">
-              <Sliders size={24} />
-            </div>
-            <div className="hac-content">
-              <h3 className="hac-title">Simulador Econométrico</h3>
-              <p className="hac-desc">
-                Corre simulaciones Monte Carlo del torneo manipulando la importancia del PIB, población, clima y suerte para ver la probabilidad de campeonar.
-              </p>
-            </div>
-            <ChevronRightIcon />
-          </div>
-
-          <div className="home-action-card glass-panel" onClick={() => onNavigate('bracket')}>
-            <div className="hac-icon bg-green-glow text-green">
-              <GitPullRequest size={24} />
-            </div>
-            <div className="hac-content">
-              <h3 className="hac-title">Llaves del Torneo (Bracket)</h3>
-              <p className="hac-desc">
-                Visualiza y pronostica las llaves de eliminación directa desde dieciseisavos de final hasta coronar al campeón del mundo.
-              </p>
-            </div>
-            <ChevronRightIcon />
-          </div>
         </div>
+
 
         {/* Schedule & Model Information Right */}
         <div className="flex-col gap-4">
