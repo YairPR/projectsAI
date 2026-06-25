@@ -13,13 +13,17 @@ import {
 
 interface MatchPredictorProps {
   weights: ModelWeights;
+  initialTeam1Id?: string;
+  initialTeam2Id?: string;
 }
 
 export const MatchPredictor: React.FC<MatchPredictorProps> = ({
-  weights
+  weights,
+  initialTeam1Id,
+  initialTeam2Id
 }) => {
-  const [team1Id, setTeam1Id] = useState<string>('ECU');
-  const [team2Id, setTeam2Id] = useState<string>('GER');
+  const [team1Id, setTeam1Id] = useState<string>(initialTeam1Id || 'ECU');
+  const [team2Id, setTeam2Id] = useState<string>(initialTeam2Id || 'GER');
   const [activeMarketTab, setActiveMarketTab] = useState<'resultado' | 'goles' | 'jugadores' | 'corners' | 'tarjetas' | 'tips'>('resultado');
   const [marketsResults, setMarketsResults] = useState<MatchBettingMarkets | null>(null);
 
@@ -59,6 +63,12 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
     (hm.homeTeamId === team1Id && hm.awayTeamId === team2Id) ||
     (hm.homeTeamId === team2Id && hm.awayTeamId === team1Id)
   );
+
+  // Synchronize teams state with parent navigation props
+  useEffect(() => {
+    if (initialTeam1Id) setTeam1Id(initialTeam1Id);
+    if (initialTeam2Id) setTeam2Id(initialTeam2Id);
+  }, [initialTeam1Id, initialTeam2Id]);
 
   // Initialize lineups
   useEffect(() => {
@@ -217,7 +227,7 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
 
   return (
     <div className="unified-dashboard-container fade-in">
-      <div className="ud-grid">
+      <div className="predictor-grid">
         
         {/* ================================================== */}
         {/* COL 1: PREDICTOR SETTINGS SIDEBAR */}

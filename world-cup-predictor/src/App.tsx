@@ -6,11 +6,12 @@ import { runMonteCarloSimulation, simulateGroup } from './utils/simulatorEngine'
 import { Home } from './components/Home';
 import { Dashboard } from './components/Dashboard';
 import { MatchPredictor } from './components/MatchPredictor';
-import { Trophy, Percent, Home as HomeIcon } from 'lucide-react';
+import { Trophy, Percent, Home as HomeIcon, Menu, X } from 'lucide-react';
 
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'predictor'>('home');
+  const [menuOpen, setMenuOpen] = useState(false);
   
   // Model weights state calibrated to represent 85% of rating weights (60% FIFA Rank, 25% Squad value)
   // Luck / variance reduced to 15%. GDP/Population demographic weights set to 0.00 to prevent distortion.
@@ -27,6 +28,16 @@ export default function App() {
   // Simulation results
   const [predictions, setPredictions] = useState<Record<string, SimulationStats>>({});
   const [groupStandings, setGroupStandings] = useState<Record<string, GroupStanding[]>>({});
+  
+  // Lifted selection state for interactive navigation from Home
+  const [selectedTeams, setSelectedTeams] = useState<{ t1: string; t2: string }>({ t1: 'ECU', t2: 'GER' });
+
+  const handleNavigate = (tab: 'home' | 'dashboard' | 'predictor', matchTeams?: { team1Id: string; team2Id: string }) => {
+    if (matchTeams) {
+      setSelectedTeams({ t1: matchTeams.team1Id, t2: matchTeams.team2Id });
+    }
+    setActiveTab(tab);
+  };
 
   // Compute standings and initial predictions on load or weight change
   const computeInitialResults = () => {
@@ -56,32 +67,41 @@ export default function App() {
     <div className="app-container">
       {/* Premium Header */}
       <header className="header">
-        <div className="logo-container">
-          <span style={{ fontSize: '2rem' }}>🏆</span>
+        <div className="logo-container" onClick={() => handleNavigate('home')}>
+          <div className="logo-badge-neon">
+            <span className="logo-emoji-trophy">🏆</span>
+            <div className="logo-pulse-dot"></div>
+          </div>
           <div>
             <h1 className="logo-text">Mundial 2026</h1>
             <span className="logo-subtext">Predicción Analítica</span>
           </div>
         </div>
 
-        <nav className="nav-tabs">
+        {/* Hamburger Menu Toggle Button */}
+        <button className="menu-toggle-btn" onClick={() => setMenuOpen(!menuOpen)}>
+          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        {/* Navigation Tabs */}
+        <nav className={`nav-tabs ${menuOpen ? 'mobile-open' : ''}`}>
           <button 
             className={`nav-tab ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => setActiveTab('home')}
+            onClick={() => { handleNavigate('home'); setMenuOpen(false); }}
           >
             <HomeIcon size={16} />
             <span>Inicio</span>
           </button>
           <button 
             className={`nav-tab ${activeTab === 'predictor' ? 'active' : ''}`}
-            onClick={() => setActiveTab('predictor')}
+            onClick={() => { handleNavigate('predictor'); setMenuOpen(false); }}
           >
             <Percent size={16} />
             <span>Herramienta de predicción</span>
           </button>
           <button 
             className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => { handleNavigate('dashboard'); setMenuOpen(false); }}
           >
             <Trophy size={16} />
             <span>Dashboard</span>
@@ -92,12 +112,14 @@ export default function App() {
       {/* Main body area */}
       <main className="main-content">
         {activeTab === 'home' && (
-          <Home onNavigate={setActiveTab} />
+          <Home onNavigate={handleNavigate} />
         )}
 
         {activeTab === 'predictor' && (
           <MatchPredictor
             weights={weights}
+            initialTeam1Id={selectedTeams.t1}
+            initialTeam2Id={selectedTeams.t2}
           />
         )}
 
@@ -111,9 +133,9 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <p>© 2026 FIFA World Cup Predictor. Desarrollado con datos estadísticos y alineaciones en vivo de Opta Sports.</p>
+        <p>© 2026 FIFA World Cup Predictor. Desarrollado por <strong>Yair PR</strong> con datos estadísticos y alineaciones en vivo de Opta Sports.</p>
         <p style={{ marginTop: '0.25rem', fontSize: '0.75rem' }}>
-          Diseño Premium • Alojado de forma estática en GitHub Pages
+          Diseño Premium & Inteligencia de Datos • Alojado de forma estática en GitHub Pages
         </p>
       </footer>
     </div>

@@ -1,36 +1,45 @@
 import React from 'react';
-import { Trophy, Percent, ArrowRight, ShieldAlert } from 'lucide-react';
+import { Trophy, ArrowRight, ShieldAlert, TrendingUp, Cpu, Award } from 'lucide-react';
 
 interface HomeProps {
-  onNavigate: (tab: 'dashboard' | 'predictor') => void;
+  onNavigate: (tab: 'home' | 'dashboard' | 'predictor', matchTeams?: { team1Id: string; team2Id: string }) => void;
 }
 
 export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const todayMatches = [
-    { time: 'Hoy · 18:00h', hFlag: '🇪🇨', hName: 'Ecuador', aFlag: '🇩🇪', aName: 'Alemania', note: 'Partidazo Grupo E' },
-    { time: 'Hoy · 21:00h', hFlag: '🇨🇭', hName: 'Suiza', aFlag: '🇨🇦', aName: 'Canadá', note: 'Definición Grupo B' },
-    { time: 'Hoy · 21:00h', hFlag: '🇨🇼', hName: 'Curazao', aFlag: '🇨🇮', aName: 'Costa de Marfil', note: 'Grupo E - Clave' },
-    { time: 'Hoy · 23:30h', hFlag: '🇧🇷', hName: 'Brasil', aFlag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', aName: 'Escocia', note: 'Grupo C' }
+    { time: 'Hoy · 18:00h', hId: 'ECU', hFlag: '🇪🇨', hName: 'Ecuador', aId: 'GER', aFlag: '🇩🇪', aName: 'Alemania', note: 'Partidazo Grupo E', pHome: 34, pDraw: 26, pAway: 40 },
+    { time: 'Hoy · 21:00h', hId: 'SUI', hFlag: '🇨🇭', hName: 'Suiza', aId: 'CAN', aFlag: '🇨🇦', aName: 'Canadá', note: 'Definición Grupo B', pHome: 42, pDraw: 29, pAway: 29 },
+    { time: 'Hoy · 21:00h', hId: 'CUR', hFlag: '🇨🇼', hName: 'Curazao', aId: 'CIV', aFlag: '🇨🇮', aName: 'Costa de Marfil', note: 'Grupo E - Clave', pHome: 15, pDraw: 22, pAway: 63 },
+    { time: 'Hoy · 23:30h', hId: 'BRA', hFlag: '🇧🇷', hName: 'Brasil', aId: 'SCO', aFlag: '🏴\u200d☠️', aName: 'Escocia', note: 'Grupo C', pHome: 72, pDraw: 18, pAway: 10 }
+  ];
+
+  const contenders = [
+    { rank: '#1', name: 'España', flag: '🇪🇸', elo: 1820, value: '€980M', prob: 15.2 },
+    { rank: '#2', name: 'Francia', flag: '🇫🇷', elo: 1845, value: '€1.04B', prob: 14.5 },
+    { rank: '#3', name: 'Brasil', flag: '🇧🇷', elo: 1785, value: '€1.05B', prob: 13.8 },
+    { rank: '#4', name: 'Argentina', flag: '🇦🇷', elo: 1860, value: '€800M', prob: 12.8 },
+    { rank: '#5', name: 'Inglaterra', flag: '🏴\u200d󠁥󠁮󠁧󠁿', elo: 1740, value: '€1.20B', prob: 11.2 }
   ];
 
   return (
     <div className="home-container fade-in">
-      {/* Hero Welcome Banner */}
-      <div className="home-hero glass-panel">
+      {/* Hero Welcome Banner with Stadium Background */}
+      <div className="home-hero glass-panel stadium-hero-bg">
+        <div className="hero-overlay"></div>
         <div className="hero-content">
           <div className="hero-badge">
             <SparklesIcon />
-            <span>MUNDIAL 2026 · ANÁLISIS DE RENDIMIENTO</span>
+            <span>MUNDIAL 2026 · SIMULADOR MATEMÁTICO</span>
           </div>
           <h1 className="hero-title">
             Herramienta de Predicción Analítica
           </h1>
           <p className="hero-subtitle">
-            Proporciona proyecciones avanzadas y probabilidades matemáticas para cada enfrentamiento del Mundial 2026. Utiliza un modelo Poisson calibrado con datos de rendimiento deportivo reales de <strong>Opta Sports</strong> (alineaciones oficiales, estado físico, edad y valor de mercado).
+            Proporciona proyecciones avanzadas y probabilidades para cada enfrentamiento del Mundial 2026. Utiliza un modelo Poisson calibrado con datos de rendimiento deportivo reales de <strong>Opta Sports</strong>, valor de mercado de <strong>Transfermarkt</strong> y rankings ELO de la <strong>FIFA</strong>.
           </p>
           <div className="hero-actions">
             <button className="primary-btn" onClick={() => onNavigate('predictor')}>
-              <span>Abrir Herramienta de Predicción</span>
+              <span>Abrir Predictor 1v1</span>
               <ArrowRight size={16} />
             </button>
             <button className="secondary-btn" onClick={() => onNavigate('dashboard')}>
@@ -38,82 +47,117 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </button>
           </div>
         </div>
-        <div className="hero-icon">🏆</div>
+        
+        {/* Floating Cup Container using the Uploaded Trophy Image */}
+        <div className="hero-trophy-container">
+          <div className="trophy-glow-behind"></div>
+          <img src="/trophy_classic.jpg" alt="Copa del Mundo" className="trophy-image-floating" />
+          <div className="trophy-sparkle s1">✨</div>
+          <div className="trophy-sparkle s2">⭐</div>
+          <div className="trophy-sparkle s3">✨</div>
+        </div>
       </div>
 
-      {/* Grid of Main Navigation Cards */}
-      <div className="card-grid-2" style={{ marginTop: '1.5rem' }}>
+      {/* Grid of Main Dashboard Widgets */}
+      <div className="card-grid-2" style={{ marginTop: '1rem' }}>
         
-        {/* Navigation Cards Left */}
+        {/* Left Side: Highlighted Matches with interactive ELO progress bars */}
         <div className="flex-col gap-4">
-          <div className="ud-section-title" style={{ paddingLeft: '0.5rem' }}>Módulos Principales</div>
-          
-          <div className="home-action-card glass-panel" onClick={() => onNavigate('predictor')}>
-            <div className="hac-icon bg-cyan-glow text-cyan">
-              <Percent size={24} />
-            </div>
-            <div className="hac-content">
-              <h3 className="hac-title">Herramienta de Predicción</h3>
-              <p className="hac-desc">
-                Analiza enfrentamientos directos cargando rankings FIFA actualizados, cotizaciones de Transfermarkt y alineaciones oficiales de último minuto de Opta. Permite activar el análisis por Teoría de Juegos.
-              </p>
-            </div>
-            <ChevronRightIcon />
+          <div className="ud-section-title" style={{ paddingLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <TrendingUp size={14} className="text-cyan" />
+            <span>Partidos Destacados de la Jornada</span>
           </div>
+          
+          <div className="home-matches-list flex-col gap-3">
+            {todayMatches.map((m, idx) => (
+              <div key={idx} className="home-match-card glass-panel">
+                <div className="hm-header">
+                  <span className="hm-time">{m.time}</span>
+                  <span className="hm-note">{m.note}</span>
+                </div>
+                
+                <div className="hm-teams">
+                  <span className="hm-team-cell">
+                    <span className="hm-flag">{m.hFlag}</span>
+                    <span>{m.hName}</span>
+                  </span>
+                  <span className="hm-vs">VS</span>
+                  <span className="hm-team-cell justify-end">
+                    <span>{m.aName}</span>
+                    <span className="hm-flag">{m.aFlag}</span>
+                  </span>
+                </div>
 
-          <div className="home-action-card glass-panel" onClick={() => onNavigate('dashboard')}>
-            <div className="hac-icon bg-gold-glow text-gold">
-              <Trophy size={24} />
-            </div>
-            <div className="hac-content">
-              <h3 className="hac-title">Dashboard Táctico & Jugadores</h3>
-              <p className="hac-desc">
-                Busca cualquier jugador de las 48 selecciones para analizar su radar SVG de habilidades en vivo y revisa las tablas oficiales de posiciones del mundial.
-              </p>
-            </div>
-            <ChevronRightIcon />
+                {/* Win probabilities visual bar */}
+                <div className="hm-prob-container">
+                  <div className="hm-prob-bar">
+                    <div className="hm-prob-fill home" style={{ width: `${m.pHome}%` }} title={`Local: ${m.pHome}%`}></div>
+                    <div className="hm-prob-fill draw" style={{ width: `${m.pDraw}%` }} title={`Empate: ${m.pDraw}%`}></div>
+                    <div className="hm-prob-fill away" style={{ width: `${m.pAway}%` }} title={`Visitante: ${m.pAway}%`}></div>
+                  </div>
+                  <div className="hm-prob-labels">
+                    <span className="text-cyan">{m.pHome}%</span>
+                    <span className="text-muted">Empate {m.pDraw}%</span>
+                    <span className="text-purple">{m.pAway}%</span>
+                  </div>
+                </div>
+
+                <div className="hm-footer">
+                  <span className="hm-desc">Precalculado con ELO y alineaciones en vivo</span>
+                  <button className="hm-predict-btn" onClick={() => onNavigate('predictor', { team1Id: m.hId, team2Id: m.aId })}>
+                    Analizar 1v1 →
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-
-        {/* Schedule & Model Information Right */}
+        {/* Right Side: Favorites Widget & Overall Stats */}
         <div className="flex-col gap-4">
-          <div className="ud-section-title" style={{ paddingLeft: '0.5rem' }}>Partidos del Mundial en Vivo</div>
-          
-          <div className="glass-panel flex-col gap-3" style={{ flexGrow: 1 }}>
-            <div className="panel-header-row" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-              <CalendarIcon />
-              <span className="panel-title-text" style={{ fontSize: '0.8rem' }}>Juegos de la Fase de Grupos</span>
-            </div>
+          <div className="ud-section-title" style={{ paddingLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Award size={14} className="text-gold" />
+            <span>Favoritos al Título (Top 5)</span>
+          </div>
 
-            <div className="home-matches-list flex-col gap-3">
-              {todayMatches.map((m, idx) => (
-                <div key={idx} className="home-match-row">
-                  <span className="hm-time">{m.time}</span>
-                  <div className="hm-teams">
-                    <span className="hm-team-cell">
-                      <span className="hm-flag">{m.hFlag}</span>
-                      <span>{m.hName}</span>
-                    </span>
-                    <span className="hm-vs">vs</span>
-                    <span className="hm-team-cell justify-end">
-                      <span>{m.aName}</span>
-                      <span className="hm-flag">{m.aFlag}</span>
-                    </span>
+          <div className="glass-panel flex-col gap-4" style={{ flexGrow: 1 }}>
+            <div className="contenders-list flex-col gap-3">
+              {contenders.map((c, idx) => (
+                <div key={idx} className="contender-row">
+                  <div className="contender-info">
+                    <span className="contender-rank">{c.rank}</span>
+                    <span className="contender-flag">{c.flag}</span>
+                    <span className="contender-name">{c.name}</span>
                   </div>
-                  <div className="hm-footer">
-                    <span className="hm-note">{m.note}</span>
-                    <button className="hm-predict-btn" onClick={() => onNavigate('predictor')}>
-                      Analizar →
-                    </button>
+                  <div className="contender-metrics">
+                    <span className="contender-elo">ELO {c.elo}</span>
+                    <span className="contender-value">{c.value}</span>
+                  </div>
+                  <div className="contender-progress-container">
+                    <div className="contender-progress-bar" style={{ width: `${c.prob * 5}%` }}></div>
+                    <span className="contender-prob">{c.prob}%</span>
                   </div>
                 </div>
               ))}
             </div>
 
+            {/* Quick interactive counters block */}
+            <div className="stats-counters-grid">
+              <div className="counter-item">
+                <Cpu size={16} className="text-cyan" />
+                <div className="counter-val">10,000+</div>
+                <div className="counter-lbl">Simulaciones Monte Carlo</div>
+              </div>
+              <div className="counter-item">
+                <Trophy size={16} className="text-gold" />
+                <div className="counter-val">48</div>
+                <div className="counter-lbl">Selecciones Oficiales</div>
+              </div>
+            </div>
+
             {/* Disclaimer notice */}
-            <div className="home-disclaimer-box">
-              <ShieldAlert size={14} className="text-gold" />
+            <div className="home-disclaimer-box" style={{ marginTop: 'auto' }}>
+              <ShieldAlert size={14} className="text-gold" style={{ flexShrink: 0 }} />
               <span>
                 <strong>Aviso de Análisis:</strong> Los cálculos emplean distribuciones probabilísticas basadas en rendimiento deportivo puro y alineaciones en vivo. No se consideran variables macroeconómicas.
               </span>
@@ -130,17 +174,5 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 const SparklesIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan">
     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-  </svg>
-);
-
-const CalendarIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
-  </svg>
-);
-
-const ChevronRightIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="hac-chevron">
-    <path d="m9 18 6-6-6-6"/>
   </svg>
 );
