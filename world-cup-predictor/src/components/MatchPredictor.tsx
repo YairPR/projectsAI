@@ -129,10 +129,12 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
     let stepIndex = 0;
     const interval = setInterval(() => {
       if (stepIndex < steps.length) {
-        setConsoleLines(prev => [...prev, steps[stepIndex].text]);
-        setCrawlingProgress(steps[stepIndex].progress);
+        const currentIndex = stepIndex;
+        setConsoleLines(prev => [...prev, steps[currentIndex].text]);
+        setCrawlingProgress(steps[currentIndex].progress);
         stepIndex++;
       } else {
+
         clearInterval(interval);
         setTimeout(() => {
           setIsCrawling(false);
