@@ -20,17 +20,17 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         <div className="hero-content">
           <div className="hero-badge">
             <SparklesIcon />
-            <span>MUNDIAL 2026 · MODELO CIENTÍFICO</span>
+            <span>MUNDIAL 2026 · ANÁLISIS DE RENDIMIENTO</span>
           </div>
           <h1 className="hero-title">
-            Predictor & Simulador Econométrico
+            Herramienta de Predicción Analítica
           </h1>
           <p className="hero-subtitle">
-            Combina los principios de la econometría de <strong>Joachim Klement</strong> (PIB, población, temperatura media y localía) con la distribución de Poisson y datos de rendimiento físico, edad y esquemas tácticos de <strong>Opta Sports</strong>.
+            Proporciona proyecciones avanzadas y probabilidades matemáticas para cada enfrentamiento del Mundial 2026. Utiliza un modelo Poisson calibrado con datos de rendimiento deportivo reales de <strong>Opta Sports</strong> (alineaciones oficiales, estado físico, edad y valor de mercado).
           </p>
           <div className="hero-actions">
             <button className="primary-btn" onClick={() => onNavigate('predictor')}>
-              <span>Abrir Predictor 1v1</span>
+              <span>Abrir Herramienta de Predicción</span>
               <ArrowRight size={16} />
             </button>
             <button className="secondary-btn" onClick={() => onNavigate('dashboard')}>
@@ -46,16 +46,16 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         
         {/* Navigation Cards Left */}
         <div className="flex-col gap-4">
-          <div className="ud-section-title" style={{ paddingLeft: '0.5rem' }}>Módulos de Simulación</div>
+          <div className="ud-section-title" style={{ paddingLeft: '0.5rem' }}>Módulos Principales</div>
           
           <div className="home-action-card glass-panel" onClick={() => onNavigate('predictor')}>
             <div className="hac-icon bg-cyan-glow text-cyan">
               <Percent size={24} />
             </div>
             <div className="hac-content">
-              <h3 className="hac-title">Predictor Avanzado 1v1</h3>
+              <h3 className="hac-title">Herramienta de Predicción</h3>
               <p className="hac-desc">
-                Coteja enfrentamientos directos utilizando una consola de rastreo de datos en tiempo real (FIFA, Transfermarkt, Opta). Incluye boleto de apuestas con parlays.
+                Analiza enfrentamientos directos cargando rankings FIFA actualizados, cotizaciones de Transfermarkt y alineaciones oficiales de último minuto de Opta. Permite activar el análisis por Teoría de Juegos.
               </p>
             </div>
             <ChevronRightIcon />
@@ -68,7 +68,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <div className="hac-content">
               <h3 className="hac-title">Dashboard Táctico & Jugadores</h3>
               <p className="hac-desc">
-                Busca cualquier jugador de las 48 selecciones para analizar su radar SVG de habilidades en vivo y revisa las tablas oficiales del mundial.
+                Busca cualquier jugador de las 48 selecciones para analizar su radar SVG de habilidades en vivo y revisa las tablas oficiales de posiciones del mundial.
               </p>
             </div>
             <ChevronRightIcon />
@@ -78,12 +78,12 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
         {/* Schedule & Model Information Right */}
         <div className="flex-col gap-4">
-          <div className="ud-section-title" style={{ paddingLeft: '0.5rem' }}>Partidos Destacados de Hoy</div>
+          <div className="ud-section-title" style={{ paddingLeft: '0.5rem' }}>Partidos del Mundial en Vivo</div>
           
           <div className="glass-panel flex-col gap-3" style={{ flexGrow: 1 }}>
             <div className="panel-header-row" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
               <CalendarIcon />
-              <span className="panel-title-text" style={{ fontSize: '0.8rem' }}>Calendario de Juego Activo</span>
+              <span className="panel-title-text" style={{ fontSize: '0.8rem' }}>Juegos de la Fase de Grupos</span>
             </div>
 
             <div className="home-matches-list flex-col gap-3">
@@ -104,7 +104,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   <div className="hm-footer">
                     <span className="hm-note">{m.note}</span>
                     <button className="hm-predict-btn" onClick={() => onNavigate('predictor')}>
-                      Predecir →
+                      Analizar →
                     </button>
                   </div>
                 </div>
@@ -115,7 +115,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <div className="home-disclaimer-box">
               <ShieldAlert size={14} className="text-gold" />
               <span>
-                <strong>Aviso de Análisis:</strong> Los cálculos aplican variables complejas de econometría y rendimiento físico. El fútbol contiene un ~45% de azar inherente.
+                <strong>Aviso de Análisis:</strong> Los cálculos emplean distribuciones probabilísticas basadas en rendimiento deportivo puro y alineaciones en vivo. No se consideran variables macroeconómicas.
               </span>
             </div>
           </div>

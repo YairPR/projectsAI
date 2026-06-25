@@ -483,46 +483,90 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
             <div className="prediction-results-area flex-col gap-4 fade-in" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
               
               {/* Score breakdown */}
-              <div className="score-prediction-card flex-col align-center" style={{ textAlign: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '12px' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Marcador más probable</div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)', color: 'white', display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
-                  <span>{marketsResults.teamA.name}</span>
-                  <span className="text-cyan">{marketsResults.scoreA} – {marketsResults.scoreB}</span>
-                  <span>{marketsResults.teamB.name}</span>
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  {marketsResults.teamA.name} ({marketsResults.probA}%) | Empate ({marketsResults.probDraw}%) | {marketsResults.teamB.name} ({marketsResults.probB}%)
-                </div>
-              </div>
-
-              {histMatch && (
-                <div style={{
-                  background: 'rgba(239, 68, 68, 0.05)',
-                  border: '1px solid rgba(239, 68, 68, 0.25)',
+              {histMatch ? (
+                /* Consolidated Historical Match Card */
+                <div className="score-prediction-card flex-col align-center" style={{ 
+                  textAlign: 'center', 
+                  padding: '1.25rem', 
+                  background: 'rgba(239, 68, 68, 0.03)', 
+                  border: '1px solid rgba(239, 68, 68, 0.25)', 
                   borderRadius: '12px',
-                  padding: '1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  marginTop: '0.25rem'
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Análisis de Desviación Real (Post-Partido)
+                  <div style={{ 
+                    fontSize: '0.7rem', 
+                    color: '#f87171', 
+                    fontWeight: 800, 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.1em',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '4px',
+                    display: 'inline-block',
+                    marginBottom: '0.75rem'
+                  }}>
+                    ⚽ RESULTADO HISTÓRICO REAL (OPTA)
+                  </div>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)', color: 'white', display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0' }}>
+                    <span>{marketsResults.teamA.name}</span>
+                    <span className="text-cyan">
+                      {histMatch.homeTeamId === team1Id ? histMatch.homeGoals : histMatch.awayGoals} – {histMatch.homeTeamId === team1Id ? histMatch.awayGoals : histMatch.homeGoals}
                     </span>
+                    <span>{marketsResults.teamB.name}</span>
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'white', fontWeight: 600 }}>
-                    Este partido ya se disputó: {histMatch.winnerName === 'Empate' ? 'Terminó en empate' : `Ganó ${histMatch.winnerName}`} ({histMatch.homeTeamId === team1Id ? histMatch.homeGoals : histMatch.awayGoals} – {histMatch.homeTeamId === team1Id ? histMatch.awayGoals : histMatch.homeGoals})
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.75rem' }}>
+                    Finalizado · Ganador: {histMatch.winnerName === 'Empate' ? 'Empate' : histMatch.winnerName}
                   </div>
-                  <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: '1.55', margin: 0 }}>
-                    {histMatch.optaAnalysis}
-                  </p>
+                  
+                  <div style={{ 
+                    marginTop: '0.25rem', 
+                    padding: '0.85rem', 
+                    background: 'rgba(0, 0, 0, 0.25)', 
+                    borderRadius: '8px', 
+                    textAlign: 'left',
+                    border: '1px solid rgba(255,255,255,0.04)',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+                      PROYECCIÓN ORIGINAL DEL MODELO (ELO):
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                      {marketsResults.teamA.name} {marketsResults.probA}% | Empate {marketsResults.probDraw}% | {marketsResults.teamB.name} {marketsResults.probB}% · Proyección: {marketsResults.scoreA} – {marketsResults.scoreB}
+                    </div>
+                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '0.5rem 0' }} />
+                    <div style={{ fontSize: '0.7rem', color: '#f87171', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+                      ANÁLISIS DE DESVIACIÓN DE OPTA:
+                    </div>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--text-primary)', lineHeight: '1.5', margin: 0 }}>
+                      {histMatch.optaAnalysis}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* Theoretical Projections Card for future matches */
+                <div className="score-prediction-card flex-col align-center" style={{ textAlign: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Marcador más probable</div>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)', color: 'white', display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
+                    <span>{marketsResults.teamA.name}</span>
+                    <span className="text-cyan">{marketsResults.scoreA} – {marketsResults.scoreB}</span>
+                    <span>{marketsResults.teamB.name}</span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    {marketsResults.teamA.name} ({marketsResults.probA}%) | Empate ({marketsResults.probDraw}%) | {marketsResults.teamB.name} ({marketsResults.probB}%)
+                  </div>
                 </div>
               )}
 
               {/* Advanced Markets tabs */}
               <div>
+                {histMatch && (
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(255,255,255,0.01)', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <span style={{ fontSize: '0.8rem' }}>ℹ️</span>
+                    <span>Los mercados de abajo detallan las probabilidades y cuotas teóricas pre-partido calculadas por el modelo.</span>
+                  </div>
+                )}
                 <div className="tabs" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.2rem' }}>
                   {['resultado', 'goles', 'jugadores', 'corners', 'tarjetas', 'tips'].map(tab => (
                     <button

@@ -60,7 +60,7 @@ export default function App() {
           <span style={{ fontSize: '2rem' }}>🏆</span>
           <div>
             <h1 className="logo-text">Mundial 2026</h1>
-            <span className="logo-subtext">Predictor & Apuestas</span>
+            <span className="logo-subtext">Predicción Analítica</span>
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export default function App() {
             onClick={() => setActiveTab('predictor')}
           >
             <Percent size={16} />
-            <span>Predictor 1v1</span>
+            <span>Herramienta de predicción</span>
           </button>
           <button 
             className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
@@ -111,7 +111,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <p>© 2026 FIFA World Cup Predictor. Desarrollado con datos estadísticos de Opta y econométricos de Joachim Klement.</p>
+        <p>© 2026 FIFA World Cup Predictor. Desarrollado con datos estadísticos y alineaciones en vivo de Opta Sports.</p>
         <p style={{ marginTop: '0.25rem', fontSize: '0.75rem' }}>
           Diseño Premium • Alojado de forma estática en GitHub Pages
         </p>

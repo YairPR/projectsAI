@@ -80,8 +80,6 @@ export interface MatchBettingMarkets {
 }
 
 // Calculate static rating components once to save performance
-const maxFifaPoints = Math.max(...teamsData.map(t => t.fifaPoints));
-const minFifaPoints = Math.min(...teamsData.map(t => t.fifaPoints));
 
 const maxGdp = Math.max(...teamsData.map(t => Math.log(t.gdpPerCapita)));
 const minGdp = Math.min(...teamsData.map(t => Math.log(t.gdpPerCapita)));
@@ -96,8 +94,8 @@ const minSquadVal = Math.min(...teamsData.map(t => Math.log(t.squadValue)));
  * Calculates a rating between 0 and 1 for a team based on weights
  */
 export function calculateTeamRating(team: Team, weights: ModelWeights, messiImpact: number = 0): number {
-  // 1. FIFA points normalization (0 to 1)
-  const fifaScore = (team.fifaPoints - minFifaPoints) / (maxFifaPoints - minFifaPoints || 1);
+  // 1. FIFA points ELO-logistic win expectancy relative to average international opponent (baseline 1500 ELO)
+  const eloScore = 1 / (1 + Math.pow(10, (1500 - team.fifaPoints) / 400));
 
   // 2. GDP normalization
   const gdpScore = (Math.log(team.gdpPerCapita) - minGdp) / (maxGdp - minGdp || 1);
@@ -132,7 +130,7 @@ export function calculateTeamRating(team: Team, weights: ModelWeights, messiImpa
   if (weightsSum === 0) return 0.5;
 
   let baseRating = (
-    weights.fifaRank * fifaScore +
+    weights.fifaRank * eloScore +
     weights.gdp * gdpScore +
     weights.population * popScore +
     weights.climate * climateScore +
