@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import type { Team } from '../data/teamsData';
+import React, { useState, useEffect } from 'react';
+import type { Team, Player } from '../data/teamsData';
 import type { SimulationStats, GroupStanding } from '../utils/simulatorEngine';
-import { Search, Trophy, Award, ListFilter, Percent } from 'lucide-react';
+import { Search, Trophy, Award } from 'lucide-react';
 
 interface DashboardProps {
   teams: Team[];
@@ -14,6 +14,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ teams, predictions, groupS
   const [selectedContinent, setSelectedContinent] = useState<string>('ALL');
   const [activeGroupView, setActiveGroupView] = useState<'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L'>('A');
 
+  // Dynamic player analysis state
+  const [playerTeamId, setPlayerTeamId] = useState<string>('ARG');
+  const [playerIndex, setPlayerIndex] = useState<number>(0);
+
+  const selectedTeam = teams.find(t => t.id === playerTeamId) || teams[0];
+  const selectedPlayer = selectedTeam.players[playerIndex] || selectedTeam.players[0] || null;
+
+  // Auto-reset player index if team changes
+  useEffect(() => {
+    setPlayerIndex(0);
+  }, [playerTeamId]);
+
   // Filter teams for prediction table
   const filteredPredictions = Object.values(predictions)
     .filter(p => {
@@ -25,7 +37,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ teams, predictions, groupS
       
       return matchesSearch && matchesContinent;
     })
-    // Sort by win probability by default
     .sort((a, b) => b.winProb - a.winProb);
 
   const getProbBadgeClass = (prob: number) => {
@@ -34,54 +45,162 @@ export const Dashboard: React.FC<DashboardProps> = ({ teams, predictions, groupS
     return 'prob-badge prob-low';
   };
 
+  // Hexagon Radar coordinates generator
+  const getRadarPoints = (player: Player) => {
+    let stats = [80, 80, 80, 50, 70, 80]; // default
+    if (player.name.includes('Messi')) {
+      stats = [98, 96, 97, 42, 64, 93];
+    } else {
+      const isDel = player.position === 'DEL';
+      const isMed = player.position === 'MED';
+      stats = [
+        isDel ? 88 : (isMed ? 75 : 45), // attacking
+        isMed ? 90 : (isDel ? 78 : 65), // passing
+        isDel ? 86 : (isMed ? 82 : 55), // dribbling
+        player.position === 'DEF' ? 90 : (isMed ? 70 : 35), // defending
+        player.position === 'DEF' ? 85 : (isDel ? 70 : 80), // physical
+        isDel ? 90 : (isMed ? 72 : 40)  // shooting
+      ];
+    }
+
+    const center = 100;
+    const maxRadius = 65;
+    const angles = [-Math.PI/2, -Math.PI/6, Math.PI/6, Math.PI/2, 5*Math.PI/6, 7*Math.PI/6];
+
+    return angles.map((angle, i) => {
+      const r = (stats[i] / 100) * maxRadius;
+      const x = center + r * Math.cos(angle);
+      const y = center + r * Math.sin(angle);
+      return `${x},${y}`;
+    }).join(' ');
+  };
+
+  const getStatValue = (player: Player, statIndex: number) => {
+    if (player.name.includes('Messi')) {
+      const values = [98, 96, 97, 42, 64, 93];
+      return values[statIndex];
+    }
+    const isDel = player.position === 'DEL';
+    const isMed = player.position === 'MED';
+    const values = [
+      isDel ? 88 : (isMed ? 75 : 45), // Attacking
+      isMed ? 90 : (isDel ? 78 : 65), // Passing
+      isDel ? 86 : (isMed ? 82 : 55), // Dribbling
+      player.position === 'DEF' ? 90 : (isMed ? 70 : 35), // Defending
+      player.position === 'DEF' ? 85 : (isDel ? 70 : 80), // Physical
+      isDel ? 90 : (isMed ? 72 : 40)  // Shooting
+    ];
+    return values[statIndex];
+  };
+
   const continents = ['ALL', 'UEFA', 'CONMEBOL', 'CONCACAF', 'CAF', 'AFC', 'OFC'];
+  const sortedTeamsList = [...teams].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} className="fade-in">
       
-      {/* Welcome Banner */}
-      <div className="glass-card" style={{ 
-        background: 'linear-gradient(135deg, rgba(13, 21, 39, 0.95) 0%, rgba(8, 12, 22, 0.95) 100%)',
-        borderColor: 'var(--accent-glow)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            Predicciones & Simulación FIFA 2026
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', maxWidth: '800px', fontSize: '0.95rem' }}>
-            Bienvenido al panel avanzado de probabilidades de la Copa Mundial 2026. Los datos por defecto
-            reflejan las estimaciones combinadas del superordenador de <strong>Opta (The Analyst)</strong> y
-            las variables socioeconómicas y climáticas de <strong>Joachim Klement</strong>.
-          </p>
-        </div>
-        <div style={{
-          position: 'absolute',
-          right: '5%',
-          top: '-20%',
-          fontSize: '9rem',
-          opacity: 0.05,
-          pointerEvents: 'none',
-          color: 'var(--accent-cyan)'
-        }}>
-          ⚽
-        </div>
-      </div>
-
-      {/* Grid Container for Table & Groups */}
-      <div className="card-grid-2">
+      {/* 3-Column Premium Dashboard Layout */}
+      <div className="ud-grid">
         
-        {/* Left Side: Predictions Table */}
-        <div className="glass-card">
-          <div className="panel-title">
-            <Trophy size={20} className="text-gold" />
-            <span>Probabilidades de Victoria (Opta & Klement)</span>
+        {/* ================================================== */}
+        {/* COLUMN 1: GROUPS & STANDINGS */}
+        {/* ================================================== */}
+        <div className="ud-col glass-panel flex-col gap-4">
+          <div className="panel-header-row">
+            <Award size={18} className="text-cyan" />
+            <h3 className="panel-title-text">Clasificación de Grupos</h3>
+          </div>
+          
+          {/* Group Tab Selector */}
+          <div style={{ display: 'flex', gap: '0.2rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+            {(Object.keys(groupStandings) as Array<keyof typeof groupStandings>).map(g => (
+              <button
+                key={g}
+                onClick={() => setActiveGroupView(g as any)}
+                style={{
+                  background: activeGroupView === g ? 'var(--accent-cyan)' : 'rgba(255, 255, 255, 0.02)',
+                  color: activeGroupView === g ? '#020617' : 'var(--text-secondary)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '4px',
+                  padding: '0.3rem 0.5rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontSize: '0.72rem',
+                  transition: 'var(--transition-smooth)'
+                }}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+
+          {/* Standing details of active group */}
+          <div className="table-container" style={{ flexGrow: 1 }}>
+            <table className="premium-table" style={{ fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Selección</th>
+                  <th style={{ textAlign: 'center' }}>PJ</th>
+                  <th style={{ textAlign: 'center' }}>PTS</th>
+                  <th style={{ textAlign: 'center' }}>DG</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupStandings[activeGroupView]?.map((standing, idx) => (
+                  <tr key={standing.team.id}>
+                    <td style={{ 
+                      fontWeight: 700, 
+                      color: idx < 2 ? 'var(--accent-green)' : (idx === 2 ? 'var(--accent-gold)' : 'var(--text-muted)') 
+                    }}>
+                      {idx + 1}
+                    </td>
+                    <td>
+                      <div className="team-cell" style={{ gap: '0.4rem' }}>
+                        <span className="team-flag" style={{ fontSize: '1.1rem' }}>{standing.team.flag}</span>
+                        <span style={{ fontWeight: 600 }}>{standing.team.name}</span>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{standing.played}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 800, color: 'var(--text-primary)' }}>{standing.points}</td>
+                    <td style={{ 
+                      textAlign: 'center', 
+                      fontWeight: 600, 
+                      color: standing.goalDifference > 0 ? 'var(--accent-green)' : (standing.goalDifference < 0 ? 'var(--accent-red)' : 'var(--text-secondary)')
+                    }}>
+                      {standing.goalDifference > 0 ? `+${standing.goalDifference}` : standing.goalDifference}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Color Indicators */}
+          <div className="flex-col gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-green)' }}></div>
+              <span>Clasificación Directa (Top 2)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-gold)' }}></div>
+              <span>Mejores Terceros</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ================================================== */}
+        {/* COLUMN 2: GLOBAL PREDICTIONS TABLE */}
+        {/* ================================================== */}
+        <div className="ud-col glass-panel flex-col gap-4">
+          <div className="panel-header-row">
+            <Trophy size={18} className="text-gold" />
+            <h3 className="panel-title-text">Probabilidades de Victoria</h3>
           </div>
 
           {/* Filters */}
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: '180px' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '150px' }}>
               <input
                 type="text"
                 placeholder="Buscar selección..."
@@ -89,56 +208,54 @@ export const Dashboard: React.FC<DashboardProps> = ({ teams, predictions, groupS
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
                   width: '100%',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'rgba(255, 255, 255, 0.02)',
                   border: '1px solid var(--border-glass)',
-                  padding: '0.6rem 1rem 0.6rem 2.2rem',
-                  borderRadius: '8px',
+                  padding: '0.45rem 0.75rem 0.45rem 1.8rem',
+                  borderRadius: '6px',
                   color: 'white',
-                  fontSize: '0.9rem'
+                  fontSize: '0.8rem',
+                  outline: 'none'
                 }}
               />
-              <Search size={16} style={{
+              <Search size={12} style={{
                 position: 'absolute',
-                left: '0.8rem',
+                left: '0.65rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--text-muted)'
               }} />
             </div>
 
-            <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-              <ListFilter size={16} style={{ color: 'var(--text-muted)', marginRight: '0.25rem' }} />
-              <select
-                value={selectedContinent}
-                onChange={(e) => setSelectedContinent(e.target.value)}
-                style={{
-                  background: '#0d1527',
-                  border: '1px solid var(--border-glass)',
-                  color: 'white',
-                  padding: '0.6rem',
-                  borderRadius: '8px',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer'
-                }}
-              >
-                {continents.map(c => (
-                  <option key={c} value={c}>{c === 'ALL' ? 'Confederaciones' : c}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={selectedContinent}
+              onChange={(e) => setSelectedContinent(e.target.value)}
+              style={{
+                background: '#0d1527',
+                border: '1px solid var(--border-glass)',
+                color: 'white',
+                padding: '0.45rem',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              {continents.map(c => (
+                <option key={c} value={c}>{c === 'ALL' ? 'Todos' : c}</option>
+              ))}
+            </select>
           </div>
 
           {/* Predictions Table */}
-          <div className="table-container" style={{ maxHeight: '550px', overflowY: 'auto' }}>
-            <table className="premium-table">
+          <div className="table-container" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+            <table className="premium-table" style={{ fontSize: '0.8rem' }}>
               <thead>
                 <tr>
                   <th style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1 }}>Pos</th>
                   <th style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1 }}>Equipo</th>
-                  <th style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1, textAlign: 'center' }}>1/16</th>
                   <th style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1, textAlign: 'center' }}>1/4</th>
                   <th style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1, textAlign: 'center' }}>Final</th>
-                  <th style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1, textAlign: 'center' }}>Ganador</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1, textAlign: 'center' }}>Campeón</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,22 +264,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ teams, predictions, groupS
                     <tr key={p.teamId}>
                       <td style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{idx + 1}</td>
                       <td>
-                        <div className="team-cell">
+                        <div className="team-cell" style={{ gap: '0.4rem' }}>
                           <span className="team-flag">{p.flag}</span>
-                          <span>{p.name}</span>
+                          <span style={{ fontWeight: 600 }}>{p.name}</span>
                         </div>
                       </td>
-                      <td style={{ textAlign: 'center' }} className="prob-cell">{p.r32Prob}%</td>
-                      <td style={{ textAlign: 'center' }} className="prob-cell">{p.quarterProb}%</td>
-                      <td style={{ textAlign: 'center' }} className="prob-cell">{p.finalProb}%</td>
+                      <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{p.quarterProb}%</td>
+                      <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{p.finalProb}%</td>
                       <td style={{ textAlign: 'center' }}>
-                        <span className={getProbBadgeClass(p.winProb)}>{p.winProb}%</span>
+                        <span className={getProbBadgeClass(p.winProb)} style={{ fontSize: '0.72rem', padding: '0.15rem 0.40rem' }}>
+                          {p.winProb}%
+                        </span>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                       No se encontraron selecciones.
                     </td>
                   </tr>
@@ -172,138 +290,213 @@ export const Dashboard: React.FC<DashboardProps> = ({ teams, predictions, groupS
           </div>
         </div>
 
-        {/* Right Side: Groups & Standings */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          {/* Group Tab Selector */}
-          <div className="glass-card" style={{ padding: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Award size={18} className="text-cyan" />
-                <span>Clasificación de Grupos Mundial 2026</span>
-              </h3>
-            </div>
-            
-            {/* Horizontal Group Selector tabs */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '0.25rem', 
-              overflowX: 'auto', 
-              paddingBottom: '0.5rem',
-              scrollbarWidth: 'thin'
-            }}>
-              {(Object.keys(groupStandings) as Array<keyof typeof groupStandings>).map(g => (
-                <button
-                  key={g}
-                  onClick={() => setActiveGroupView(g as any)}
+        {/* ================================================== */}
+        {/* COLUMN 3: DYNAMIC PLAYER TACTICAL ANALYSIS */}
+        {/* ================================================== */}
+        <div className="ud-col glass-panel flex-col gap-4">
+          <div className="panel-header-row">
+            <Award size={18} className="text-gold" />
+            <h3 className="panel-title-text">Análisis de Jugador</h3>
+          </div>
+
+          {/* Dynamic Selectors */}
+          <div className="flex-col gap-2">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+              <div className="flex-col gap-1">
+                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Selección</span>
+                <select
+                  value={playerTeamId}
+                  onChange={(e) => setPlayerTeamId(e.target.value)}
                   style={{
-                    background: activeGroupView === g ? 'var(--accent-cyan)' : 'rgba(255, 255, 255, 0.03)',
-                    color: activeGroupView === g ? '#020617' : 'var(--text-secondary)',
+                    background: '#0d1527',
                     border: '1px solid var(--border-glass)',
+                    color: 'white',
+                    padding: '0.45rem',
                     borderRadius: '6px',
-                    padding: '0.4rem 0.75rem',
-                    fontWeight: 700,
+                    fontSize: '0.75rem',
                     cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    transition: 'var(--transition-smooth)'
+                    outline: 'none',
+                    width: '100%'
                   }}
                 >
-                  Grupo {g}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Standing details of active group */}
-          <div className="glass-card" style={{ flex: 1 }}>
-            <div className="group-card-title">
-              <span>GRUPO {activeGroupView}</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Fase de grupos</span>
-            </div>
-
-            <div className="table-container">
-              <table className="premium-table" style={{ fontSize: '0.85rem' }}>
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Selección</th>
-                    <th style={{ textAlign: 'center' }}>PJ</th>
-                    <th style={{ textAlign: 'center' }}>PTS</th>
-                    <th style={{ textAlign: 'center' }}>DG</th>
-                    <th style={{ textAlign: 'center' }}>GF</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {groupStandings[activeGroupView]?.map((standing, idx) => (
-                    <tr key={standing.team.id}>
-                      <td style={{ 
-                        fontWeight: 700, 
-                        color: idx < 2 ? 'var(--accent-green)' : (idx === 2 ? 'var(--accent-gold)' : 'var(--text-muted)') 
-                      }}>
-                        {idx + 1}
-                      </td>
-                      <td>
-                        <div className="team-cell" style={{ gap: '0.5rem' }}>
-                          <span className="team-flag">{standing.team.flag}</span>
-                          <span>{standing.team.name}</span>
-                        </div>
-                      </td>
-                      <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{standing.played}</td>
-                      <td style={{ textAlign: 'center', fontWeight: 800, color: 'var(--text-primary)' }}>{standing.points}</td>
-                      <td style={{ 
-                        textAlign: 'center', 
-                        fontWeight: 600, 
-                        color: standing.goalDifference > 0 ? 'var(--accent-green)' : (standing.goalDifference < 0 ? 'var(--accent-red)' : 'var(--text-secondary)')
-                      }}>
-                        {standing.goalDifference > 0 ? `+${standing.goalDifference}` : standing.goalDifference}
-                      </td>
-                      <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{standing.goalsFor}</td>
-                    </tr>
+                  {sortedTeamsList.map(t => (
+                    <option key={t.id} value={t.id}>{t.flag} {t.name}</option>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </select>
+              </div>
 
-            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-green)' }}></div>
-                <span>Clasificación Directa (Top 2)</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-gold)' }}></div>
-                <span>Posible Clasificación (8 mejores 3° puestos)</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick stats panel */}
-          <div className="glass-card">
-            <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <Percent size={18} className="text-cyan" />
-              <span>Opta Supercomputer Predictions Summary</span>
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div className="flex-space" style={{ fontSize: '0.85rem', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>🇳🇱 Países Bajos (Favorito Klement)</span>
-                <span className="prob-cell" style={{ fontWeight: 700, color: 'var(--accent-gold)' }}>
-                  {predictions['NED']?.winProb}% de ganar
-                </span>
-              </div>
-              <div className="flex-space" style={{ fontSize: '0.85rem', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>🇦🇷 Argentina (Campeón Defensor)</span>
-                <span className="prob-cell" style={{ fontWeight: 700, color: 'var(--accent-cyan)' }}>
-                  {predictions['ARG']?.winProb}% de ganar
-                </span>
-              </div>
-              <div className="flex-space" style={{ fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>🇫🇷 Francia (Favorito Opta)</span>
-                <span className="prob-cell" style={{ fontWeight: 700, color: 'var(--accent-cyan)' }}>
-                  {predictions['FRA']?.winProb}% de ganar
-                </span>
+              <div className="flex-col gap-1">
+                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Jugador</span>
+                <select
+                  value={playerIndex}
+                  onChange={(e) => setPlayerIndex(Number(e.target.value))}
+                  style={{
+                    background: '#0d1527',
+                    border: '1px solid var(--border-glass)',
+                    color: 'white',
+                    padding: '0.45rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    width: '100%'
+                  }}
+                >
+                  {selectedTeam.players.map((p, idx) => (
+                    <option key={p.name} value={idx}>{p.name} ({p.position})</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
 
+          {selectedPlayer ? (
+            <div className="player-analysis-widget" style={{ animation: 'fadeIn 0.3s ease-out forwards' }}>
+              
+              {/* Profile Card */}
+              <div className="player-profile-top">
+                <span className="player-avatar-large">👤</span>
+                <div>
+                  <h4 className="pa-name">{selectedPlayer.name}</h4>
+                  <div className="pa-meta-text">
+                    <span>{selectedTeam.flag} {selectedTeam.name}</span>
+                    <span> · </span>
+                    <span>{selectedPlayer.position}</span>
+                    <span> · </span>
+                    <span>{selectedPlayer.age} años</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hexagon Skill Radar */}
+              <div className="radar-chart-container">
+                <svg width="180" height="180" viewBox="0 0 200 200" className="radar-svg">
+                  {/* Background hexagons */}
+                  {[1.0, 0.75, 0.5, 0.25].map(scale => {
+                    const r = 65 * scale;
+                    const angles = [-Math.PI/2, -Math.PI/6, Math.PI/6, Math.PI/2, 5*Math.PI/6, 7*Math.PI/6];
+                    const points = angles.map(angle => {
+                      const x = 100 + r * Math.cos(angle);
+                      const y = 100 + r * Math.sin(angle);
+                      return `${x},${y}`;
+                    }).join(' ');
+                    return (
+                      <polygon 
+                        key={scale}
+                        points={points} 
+                        fill="none" 
+                        stroke="rgba(16, 185, 129, 0.15)" 
+                        strokeWidth="1"
+                      />
+                    );
+                  })}
+
+                  {/* Axis lines */}
+                  {[-Math.PI/2, -Math.PI/6, Math.PI/6, Math.PI/2, 5*Math.PI/6, 7*Math.PI/6].map((angle, i) => {
+                    const x = 100 + 65 * Math.cos(angle);
+                    const y = 100 + 65 * Math.sin(angle);
+                    return (
+                      <line 
+                        key={i}
+                        x1="100" 
+                        y1="100" 
+                        x2={x} 
+                        y2={y} 
+                        stroke="rgba(16, 185, 129, 0.1)" 
+                        strokeWidth="1" 
+                      />
+                    );
+                  })}
+
+                  {/* Glowing Green Skills Polygon */}
+                  <polygon 
+                    points={getRadarPoints(selectedPlayer)} 
+                    fill="rgba(16, 185, 129, 0.15)" 
+                    stroke="#10b981" 
+                    strokeWidth="2" 
+                    className="radar-poly-glow"
+                  />
+
+                  {/* Data Dots */}
+                  {getRadarPoints(selectedPlayer).split(' ').map((pt, i) => {
+                    const [x, y] = pt.split(',');
+                    return (
+                      <circle 
+                        key={i}
+                        cx={x} 
+                        cy={y} 
+                        r="3" 
+                        fill="#ffffff" 
+                        stroke="#10b981" 
+                        strokeWidth="1.5"
+                      />
+                    );
+                  })}
+                  
+                  {/* Labels */}
+                  <text x="100" y="22" className="radar-label" textAnchor="middle">ATAQUE</text>
+                  <text x="168" y="78" className="radar-label" textAnchor="start">PASES</text>
+                  <text x="168" y="132" className="radar-label" textAnchor="start">REGATE</text>
+                  <text x="100" y="184" className="radar-label" textAnchor="middle">DEFENSA</text>
+                  <text x="32" y="132" className="radar-label" textAnchor="end">FÍSICO</text>
+                  <text x="32" y="78" className="radar-label" textAnchor="end">DISPARO</text>
+                </svg>
+              </div>
+
+              {/* Stats Value Grid */}
+              <div className="radar-values-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                <div className="radar-val-box">
+                  <span className="rv-label">Ataque</span>
+                  <span className="rv-value text-green">{getStatValue(selectedPlayer, 0)}</span>
+                </div>
+                <div className="radar-val-box">
+                  <span className="rv-label">Pases</span>
+                  <span className="rv-value text-green">{getStatValue(selectedPlayer, 1)}</span>
+                </div>
+                <div className="radar-val-box">
+                  <span className="rv-label">Regate</span>
+                  <span className="rv-value text-green">{getStatValue(selectedPlayer, 2)}</span>
+                </div>
+                <div className="radar-val-box">
+                  <span className="rv-label">Defensa</span>
+                  <span className="rv-value text-green">{getStatValue(selectedPlayer, 3)}</span>
+                </div>
+                <div className="radar-val-box">
+                  <span className="rv-label">Físico</span>
+                  <span className="rv-value text-green">{getStatValue(selectedPlayer, 4)}</span>
+                </div>
+                <div className="radar-val-box">
+                  <span className="rv-label">Disparo</span>
+                  <span className="rv-value text-green">{getStatValue(selectedPlayer, 5)}</span>
+                </div>
+              </div>
+
+              {/* Bottom Accumulates Stats Row */}
+              <div className="accumulated-stats-row" style={{ marginTop: '0.75rem' }}>
+                <div className="ast-box">
+                  <span className="ast-title">Goles</span>
+                  <span className="ast-number">{selectedPlayer.name.includes('Messi') ? 5 : selectedPlayer.goals}</span>
+                </div>
+                <div className="ast-box">
+                  <span className="ast-title">Asist.</span>
+                  <span className="ast-number">{selectedPlayer.name.includes('Messi') ? 3 : selectedPlayer.assists}</span>
+                </div>
+                <div className="ast-box">
+                  <span className="ast-title">xG</span>
+                  <span className="ast-number text-cyan">{selectedPlayer.name.includes('Messi') ? '4.8' : (selectedPlayer.scoringProb * 7.5).toFixed(1)}</span>
+                </div>
+                <div className="ast-box">
+                  <span className="ast-title">xA</span>
+                  <span className="ast-number text-purple">{selectedPlayer.name.includes('Messi') ? '3.1' : (selectedPlayer.assistProb * 5.2).toFixed(1)}</span>
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div className="flex-center" style={{ height: '200px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+              Selecciona un jugador para ver su análisis táctico
+            </div>
+          )}
         </div>
 
       </div>

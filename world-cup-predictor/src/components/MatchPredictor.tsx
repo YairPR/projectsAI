@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import type { Team, Player } from '../data/teamsData';
 import { teamsData } from '../data/teamsData';
-import type { ModelWeights, MatchBettingMarkets, MarketOption } from '../utils/simulatorEngine';
+import type { ModelWeights, MatchBettingMarkets, MarketOption, LineupData } from '../utils/simulatorEngine';
 import { calculateMatchBettingMarkets, probToOdds } from '../utils/simulatorEngine';
 import type { BetSelection } from './BettingSlip';
-import { Trophy, Calendar, ShieldAlert } from 'lucide-react';
+import { mockLineups } from '../data/lineupsMock';
+import { 
+  Sliders, Activity, AlertCircle, RefreshCw, 
+  Search, ShieldAlert, Terminal
+} from 'lucide-react';
+
 
 interface MatchPredictorProps {
   weights: ModelWeights;
@@ -27,35 +33,145 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
   const [activeMarketTab, setActiveMarketTab] = useState<'resultado' | 'goles' | 'jugadores' | 'corners' | 'tarjetas' | 'tips'>('resultado');
   const [marketsResults, setMarketsResults] = useState<MatchBettingMarkets | null>(null);
 
-  // Pre-calculate on load
-  useEffect(() => {
-    handlePredict();
-  }, [weights, messiImpact]);
+  // Sliders matching the weights customization
+  const [sliderForm, setSliderForm] = useState<number>(75);
+  const [sliderSquad, setSliderSquad] = useState<number>(85);
+  const [sliderHistory, setSliderHistory] = useState<number>(70);
+  const [sliderVenue, setSliderVenue] = useState<number>(55);
+  const [sliderWeather, setSliderWeather] = useState<number>(60);
 
-  const handlePredict = () => {
-    if (!team1Id || !team2Id || team1Id === team2Id) {
-      alert('Por favor selecciona dos equipos diferentes.');
-      return;
+  // Lineups management
+  const [useOfficialLineups, setUseOfficialLineups] = useState<boolean>(true);
+  const [lineupA, setLineupA] = useState<LineupData | undefined>(undefined);
+  const [lineupB, setLineupB] = useState<LineupData | undefined>(undefined);
+
+  // Data crawler console simulation state
+  const [isCrawling, setIsCrawling] = useState<boolean>(false);
+  const [consoleLines, setConsoleLines] = useState<string[]>([]);
+  const [crawlingProgress, setCrawlingProgress] = useState<number>(0);
+
+  // Search filter
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const todayMatches = [
+    { time: 'Hoy · 18:00h', hId: 'ECU', hName: 'Ecuador', aId: 'GER', aName: 'Alemania', desc: 'Partidazo Grupo E' },
+    { time: 'Hoy · 21:00h', hId: 'SUI', hName: 'Suiza', aId: 'CAN', aName: 'Canadá', desc: 'Definición Grupo B' },
+    { time: 'Hoy · 21:00h', hId: 'CUR', hName: 'Curazao', aId: 'CIV', aName: 'Costa de Marfil', desc: 'Grupo E - Clave' },
+    { time: 'Hoy · 23:30h', hId: 'BRA', hName: 'Brasil', aId: 'SCO', aName: 'Escocia', desc: 'Grupo C' }
+  ];
+
+  const t1 = teamsData.find(t => t.id === team1Id)!;
+  const t2 = teamsData.find(t => t.id === team2Id)!;
+
+  // Initialize lineups
+  useEffect(() => {
+    if (useOfficialLineups) {
+      setLineupA(mockLineups[team1Id] || createDefaultLineup(t1));
+      setLineupB(mockLineups[team2Id] || createDefaultLineup(t2));
+    } else {
+      setLineupA(undefined);
+      setLineupB(undefined);
+    }
+  }, [team1Id, team2Id, useOfficialLineups]);
+
+  // Recalculate immediately if weights or lineups change
+  useEffect(() => {
+    // Only run if we aren't currently executing a visual data crawl
+    if (!isCrawling) {
+      calculatePrediction();
+    }
+  }, [team1Id, team2Id, sliderForm, sliderSquad, sliderHistory, sliderVenue, sliderWeather, lineupA, lineupB, weights]);
+
+  function createDefaultLineup(team: Team): LineupData {
+    return {
+      formation: '4-3-3',
+      startingXI: team.players.map(p => p.name),
+      substitutes: []
+    };
+  }
+
+  const calculatePrediction = () => {
+    const customWeights: ModelWeights = {
+      fifaRank: weights.fifaRank * (sliderHistory / 70),
+      gdp: weights.gdp,
+      population: weights.population,
+      climate: weights.climate * (sliderWeather / 60),
+      host: weights.host * (sliderVenue / 55),
+      squadValue: weights.squadValue * (sliderSquad / 85),
+      luck: weights.luck * (1.1 - sliderForm / 100)
+    };
+
+    const res = calculateMatchBettingMarkets(
+      t1,
+      t2,
+      customWeights,
+      messiImpact,
+      lineupA,
+      lineupB
+    );
+    setMarketsResults(res);
+  };
+
+  // Run the simulated data crawling console
+  const handleCalculateWithCrawling = () => {
+    setIsCrawling(true);
+    setConsoleLines([]);
+    setCrawlingProgress(0);
+
+    const steps = [
+      { text: '📡 Conectando con servidores de la FIFA (Rankings y coeficientes)...', progress: 20 },
+      { text: '📈 Escaneando cotizaciones de mercado y fichajes de Transfermarkt...', progress: 45 },
+      { text: '🏃 Extrayendo estado físico de planteles y alineaciones oficiales de Opta...', progress: 70 },
+      { text: '📉 Consultando PIB y variables climáticas del modelo econométrico Klement...', progress: 85 },
+      { text: '🧮 Ejecutando simulación de Poisson y Monte Carlo local (10,000 iteraciones)...', progress: 100 }
+    ];
+
+    let stepIndex = 0;
+    const interval = setInterval(() => {
+      if (stepIndex < steps.length) {
+        setConsoleLines(prev => [...prev, steps[stepIndex].text]);
+        setCrawlingProgress(steps[stepIndex].progress);
+        stepIndex++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          setIsCrawling(false);
+          calculatePrediction();
+        }, 500);
+      }
+    }, 700);
+  };
+
+  const handleTogglePlayer = (player: Player, isTeamA: boolean) => {
+    const activeLineup = isTeamA ? lineupA : lineupB;
+    const setActive = isTeamA ? setLineupA : setLineupB;
+
+    if (!activeLineup) return;
+
+    const inStarting = activeLineup.startingXI.includes(player.name);
+    let newStarting = [...activeLineup.startingXI];
+    let newSubs = [...activeLineup.substitutes];
+
+    if (inStarting) {
+      newStarting = newStarting.filter(n => n !== player.name);
+      if (!newSubs.includes(player.name)) newSubs.push(player.name);
+    } else {
+      newSubs = newSubs.filter(n => n !== player.name);
+      if (!newStarting.includes(player.name)) newStarting.push(player.name);
     }
 
-    const t1 = teamsData.find(t => t.id === team1Id)!;
-    const t2 = teamsData.find(t => t.id === team2Id)!;
-
-    const res = calculateMatchBettingMarkets(t1, t2, weights, messiImpact);
-    setMarketsResults(res);
+    setActive({
+      ...activeLineup,
+      startingXI: newStarting,
+      substitutes: newSubs
+    });
   };
 
   const handleSelectDailyMatch = (id1: string, id2: string) => {
     setTeam1Id(id1);
     setTeam2Id(id2);
-    // Predict immediately
-    const t1 = teamsData.find(t => t.id === id1)!;
-    const t2 = teamsData.find(t => t.id === id2)!;
-    const res = calculateMatchBettingMarkets(t1, t2, weights, messiImpact);
-    setMarketsResults(res);
   };
 
-  // Check if a bet is already in the Betting Slip
   const isSelected = (selectionId: string) => {
     const slipId = `${team1Id}_${team2Id}_${selectionId}`;
     return selections.some(sel => sel.id === slipId);
@@ -78,32 +194,9 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
         selectionId: opt.selectionId
       };
       onAddSelection(newSel);
-      onToggleSlip(); // Automatically show slip when adding a bet
+      onToggleSlip();
     }
   };
-
-  const getConfClass = (conf: number) => {
-    if (conf >= 60) return 'conf-fill high';
-    if (conf >= 42) return 'conf-fill med';
-    return 'conf-fill low';
-  };
-
-  // Pre-defined daily matches schedule
-  const dailyMatches = [
-    { date: 'Hoy · 18:00h', hId: 'ECU', hName: 'Ecuador', aId: 'GER', aName: 'Alemania', note: 'Partidazo Grupo E' },
-    { date: 'Hoy · 21:00h', hId: 'SUI', hName: 'Suiza', aId: 'CAN', aName: 'Canadá', note: 'Definición Grupo B' },
-    { date: 'Hoy · 21:00h', hId: 'CUR', hName: 'Curazao', aId: 'CIV', aName: 'Costa de Marfil', note: 'Grupo E - Clave' },
-    { date: 'Hoy · 23:30h', hId: 'BRA', hName: 'Brasil', aId: 'SCO', aName: 'Escocia', note: 'Grupo C' }
-  ];
-
-  // Golden Boot data
-  const goldenBootList = [
-    { rank: 1, name: 'L. Messi', flag: '🇦🇷', team: 'Argentina', g: 4, a: 1, gp: 2, min: 180, pb: 28 },
-    { rank: 2, name: 'E. Haaland', flag: '🇳🇴', team: 'Noruega', g: 4, a: 0, gp: 2, min: 180, pb: 22 },
-    { rank: 3, name: 'Jonathan David', flag: '🇨🇦', team: 'Canadá', g: 3, a: 0, gp: 2, min: 180, pb: 12 },
-    { rank: 4, name: 'D. Undav', flag: '🇩🇪', team: 'Alemania', g: 3, a: 2, gp: 2, min: 90, pb: 10 },
-    { rank: 5, name: 'K. Mbappé', flag: '🇫🇷', team: 'Francia', g: 3, a: 1, gp: 2, min: 180, pb: 20 }
-  ];
 
   const renderMarketCard = (title: string, options: MarketOption[] | undefined) => {
     if (!options) return null;
@@ -144,370 +237,425 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
     );
   };
 
-  // Sort teams alphabetically for selector options
   const sortedTeams = [...teamsData].sort((a, b) => a.name.localeCompare(b.name));
+  const filteredTeams = sortedTeams.filter(t => 
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      
-      {/* Disclaimer Alert */}
-      <div style={{
-        background: 'rgba(244, 63, 94, 0.05)',
-        border: '1px solid rgba(244, 63, 94, 0.15)',
-        borderRadius: '10px',
-        padding: '0.85rem 1.25rem',
-        fontSize: '0.8rem',
-        color: 'var(--text-secondary)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem'
-      }}>
-        <ShieldAlert size={18} className="text-cyan" style={{ flexShrink: 0 }} />
-        <span>
-          <strong>⚠️ Aviso de Análisis:</strong> Las probabilidades calculan formaciones, condición física y GDP del modelo. El fútbol contiene un ~45% de suerte aleatoria inherente. Apuesta con cautela.
-        </span>
-      </div>
-
-      {/* Match Selector Panel */}
-      <div className="glass-card">
-        <div className="group-card-title" style={{ color: 'var(--text-primary)' }}>
-          <span>⚽ PREDECIR ENFRENTAMIENTO DIRECTO</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Filtros Avanzados</span>
-        </div>
-
-        <div className="match-selector-grid">
-          <div className="team-picker">
-            <label>🏠 LOCAL (EQUIPO A)</label>
-            <select
-              value={team1Id}
-              onChange={(e) => setTeam1Id(e.target.value)}
-            >
-              {sortedTeams.map(t => (
-                <option key={t.id} value={t.id}>{t.flag} {t.name} (FIFA #{t.fifaRank})</option>
-              ))}
-            </select>
-          </div>
-          <div className="vs-badge">
-            <span>VS</span>
-          </div>
-          <div className="team-picker">
-            <label>✈️ VISITANTE (EQUIPO B)</label>
-            <select
-              value={team2Id}
-              onChange={(e) => setTeam2Id(e.target.value)}
-            >
-              {sortedTeams.map(t => (
-                <option key={t.id} value={t.id}>{t.flag} {t.name} (FIFA #{t.fifaRank})</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <button className="btn-predict" onClick={handlePredict}>
-          🔮 CALCULAR PREDICCIÓN Y MERCADOS DE HOY
-        </button>
-      </div>
-
-      {/* Predictions Output Results Panel */}
-      {marketsResults && (
-        <div className="glass-card fade-in" style={{ padding: 0, overflow: 'hidden' }}>
-          
-          {/* Big Score Card */}
-          <div className="result-score">
-            <div className="teams-display">
-              <div className="team-name-big">
-                {marketsResults.teamA.flag} {marketsResults.teamA.name}
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div className="score-pred">
-                  {marketsResults.scoreA} – {marketsResults.scoreB}
-                </div>
-                <div className="score-sub">Marcador más probable</div>
-              </div>
-              <div className="team-name-big">
-                {marketsResults.teamB.flag} {marketsResults.teamB.name}
-              </div>
-            </div>
-            
-            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '1rem' }}>
-              {marketsResults.teamA.name} ({marketsResults.probA}%) | Empate ({marketsResults.probDraw}%) | {marketsResults.teamB.name} ({marketsResults.probB}%)
-            </div>
-          </div>
-
-          {/* Confidence Slider Bar */}
-          <div className="confidence" style={{ padding: '1.25rem 1.5rem 1rem' }}>
-            <div className="conf-label">Confianza del Modelo Predictivo</div>
-            <div className="conf-bar">
-              <div
-                className={getConfClass(marketsResults.confidence)}
-                style={{ width: `${marketsResults.confidence}%` }}
-              ></div>
-            </div>
-            <div className="conf-note">
-              {marketsResults.confidence}% de confianza. Goles esperados xG: {marketsResults.xgA} – {marketsResults.xgB} (Total: {+(marketsResults.xgA + marketsResults.xgB).toFixed(2)})
-            </div>
-          </div>
-
-          {/* Key Match Analytics Factors list */}
-          <div className="factors-list" style={{ padding: '0.2rem 1.5rem 1.25rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem' }}>
-              Factores clave del análisis
-            </div>
-            <div className="factor-item">
-              <span className="ficon">📊</span>
-              <div className="ftext">
-                <strong>Clasificación Deportiva:</strong> {marketsResults.teamA.name} (FIFA #{marketsResults.teamA.fifaRank}) frente a {marketsResults.teamB.name} (FIFA #{marketsResults.teamB.fifaRank}).
-              </div>
-            </div>
-            <div className="factor-item">
-              <span className="ficon">🏃</span>
-              <div className="ftext">
-                <strong>Condición y Edad:</strong> {marketsResults.teamA.name} (Edad: {marketsResults.teamA.averageAge} a., Forma: {marketsResults.teamA.physicalForm}%) vs {marketsResults.teamB.name} (Edad: {marketsResults.teamB.averageAge} a., Forma: {marketsResults.teamB.physicalForm}%).
-              </div>
-            </div>
-            <div className="factor-item">
-              <span className="ficon">📉</span>
-              <div className="ftext">
-                <strong>Econometría Klement:</strong> PIB per cápita A: ${marketsResults.teamA.gdpPerCapita.toLocaleString()} vs PIB per cápita B: ${marketsResults.teamB.gdpPerCapita.toLocaleString()}.
-              </div>
-            </div>
-          </div>
-
-          {/* Betting Markets Tab Options */}
-          <div style={{ padding: '0 1.5rem', borderTop: '1px solid var(--border-glass)', paddingTop: '1.25rem' }}>
-            <div className="tabs" style={{ marginBottom: 0 }}>
-              <button
-                className={`tab-btn ${activeMarketTab === 'resultado' ? 'active' : ''}`}
-                onClick={() => setActiveMarketTab('resultado')}
-              >
-                Resultado
-              </button>
-              <button
-                className={`tab-btn ${activeMarketTab === 'goles' ? 'active' : ''}`}
-                onClick={() => setActiveMarketTab('goles')}
-              >
-                Goles
-              </button>
-              <button
-                className={`tab-btn ${activeMarketTab === 'jugadores' ? 'active' : ''}`}
-                onClick={() => setActiveMarketTab('jugadores')}
-              >
-                Jugadores
-              </button>
-              <button
-                className={`tab-btn ${activeMarketTab === 'corners' ? 'active' : ''}`}
-                onClick={() => setActiveMarketTab('corners')}
-              >
-                Córners
-              </button>
-              <button
-                className={`tab-btn ${activeMarketTab === 'tarjetas' ? 'active' : ''}`}
-                onClick={() => setActiveMarketTab('tarjetas')}
-              >
-                Tarjetas
-              </button>
-              <button
-                className={`tab-btn ${activeMarketTab === 'tips' ? 'active' : ''}`}
-                onClick={() => setActiveMarketTab('tips')}
-              >
-                💡 Tips de Valor
-              </button>
-            </div>
-          </div>
-
-          {/* Active Tab Panel Markets */}
-          <div style={{ paddingBottom: '1rem' }}>
-            {activeMarketTab === 'resultado' && (
-              <div className="markets-grid fade-in">
-                {renderMarketCard('1X2 (Tiempo Reglamentario)', marketsResults.markets['1X2'])}
-                {renderMarketCard('Doble Oportunidad', marketsResults.markets['doubleChance'])}
-                {renderMarketCard('Ambos Equipos Anotan (BTTS)', marketsResults.markets['btts'])}
-                {renderMarketCard('Marcadores Exactos más Probables', marketsResults.markets['exactScore'])}
-              </div>
-            )}
-
-            {activeMarketTab === 'goles' && (
-              <div className="markets-grid fade-in">
-                {renderMarketCard('Total de Goles (Over)', marketsResults.markets['totalGoals'])}
-                {renderMarketCard(`Goles de ${marketsResults.teamA.name}`, [
-                  { n: 'Marca al menos 1', p: Math.round((1 - Math.exp(-marketsResults.xgA)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgA)) * 100)), marketType: 'TEAM_GOALS', selectionId: `${marketsResults.teamA.id}_GOAL_1` },
-                  { n: 'Marca 2 o más', p: Math.round((1 - Math.exp(-marketsResults.xgA) - marketsResults.xgA * Math.exp(-marketsResults.xgA)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgA) - marketsResults.xgA * Math.exp(-marketsResults.xgA)) * 100)), marketType: 'TEAM_GOALS', selectionId: `${marketsResults.teamA.id}_GOAL_2` }
-                ])}
-                {renderMarketCard(`Goles de ${marketsResults.teamB.name}`, [
-                  { n: 'Marca al menos 1', p: Math.round((1 - Math.exp(-marketsResults.xgB)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgB)) * 100)), marketType: 'TEAM_GOALS', selectionId: `${marketsResults.teamB.id}_GOAL_1` },
-                  { n: 'Marca 2 o más', p: Math.round((1 - Math.exp(-marketsResults.xgB) - marketsResults.xgB * Math.exp(-marketsResults.xgB)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgB) - marketsResults.xgB * Math.exp(-marketsResults.xgB)) * 100)), marketType: 'TEAM_GOALS', selectionId: `${marketsResults.teamB.id}_GOAL_2` }
-                ])}
-                {renderMarketCard('Estadísticas en Mitades', [
-                  { n: 'Gol en 1ª Mitad', p: Math.round((1 - Math.exp(-marketsResults.xgA * 0.45 - marketsResults.xgB * 0.45)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgA * 0.45 - marketsResults.xgB * 0.45)) * 100)), marketType: 'HALF_STATS', selectionId: 'GOAL_1ST_HALF' },
-                  { n: 'Gol en 2ª Mitad', p: Math.round((1 - Math.exp(-marketsResults.xgA * 0.55 - marketsResults.xgB * 0.55)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgA * 0.55 - marketsResults.xgB * 0.55)) * 100)), marketType: 'HALF_STATS', selectionId: 'GOAL_2ND_HALF' }
-                ])}
-              </div>
-            )}
-
-            {activeMarketTab === 'jugadores' && (
-              <div className="markets-grid fade-in">
-                {renderMarketCard('Anota en Cualquier Momento', marketsResults.markets['anytimeGoal'])}
-                {renderMarketCard('Primer Goleador del Encuentro', marketsResults.markets['firstGoal'])}
-                {renderMarketCard('Asistente de Gol', marketsResults.markets['anytimeAssist'])}
-              </div>
-            )}
-
-            {activeMarketTab === 'corners' && (
-              <div className="markets-grid fade-in">
-                {renderMarketCard('Total de Córners (Over)', marketsResults.markets['corners'])}
-                {renderMarketCard(`Córners de ${marketsResults.teamA.name}`, [
-                  { n: `Más de ${Math.round(marketsResults.avgCornersA - 1)}.5 Córners`, p: 65, odds: probToOdds(65), marketType: 'TEAM_CORNERS', selectionId: `${marketsResults.teamA.id}_CORNERS_LOW` },
-                  { n: `Más de ${Math.round(marketsResults.avgCornersA)}.5 Córners`, p: 40, odds: probToOdds(40), marketType: 'TEAM_CORNERS', selectionId: `${marketsResults.teamA.id}_CORNERS_MID` }
-                ])}
-                {renderMarketCard(`Córners de ${marketsResults.teamB.name}`, [
-                  { n: `Más de ${Math.round(marketsResults.avgCornersB - 1)}.5 Córners`, p: 62, odds: probToOdds(62), marketType: 'TEAM_CORNERS', selectionId: `${marketsResults.teamB.id}_CORNERS_LOW` },
-                  { n: `Más de ${Math.round(marketsResults.avgCornersB)}.5 Córners`, p: 38, odds: probToOdds(38), marketType: 'TEAM_CORNERS', selectionId: `${marketsResults.teamB.id}_CORNERS_MID` }
-                ])}
-              </div>
-            )}
-
-            {activeMarketTab === 'tarjetas' && (
-              <div className="markets-grid fade-in">
-                {renderMarketCard('Total de Tarjetas Amarillas', marketsResults.markets['bookings'])}
-                {renderMarketCard(`Tarjetas de ${marketsResults.teamA.name}`, [
-                  { n: 'Al menos 1 tarjeta', p: 70, odds: probToOdds(70), marketType: 'TEAM_CARDS', selectionId: `${marketsResults.teamA.id}_CARD_1` },
-                  { n: '2 o más tarjetas', p: 35, odds: probToOdds(35), marketType: 'TEAM_CARDS', selectionId: `${marketsResults.teamA.id}_CARD_2` }
-                ])}
-                {renderMarketCard(`Tarjetas de ${marketsResults.teamB.name}`, [
-                  { n: 'Al menos 1 tarjeta', p: 68, odds: probToOdds(68), marketType: 'TEAM_CARDS', selectionId: `${marketsResults.teamB.id}_CARD_1` },
-                  { n: '2 o más tarjetas', p: 32, odds: probToOdds(32), marketType: 'TEAM_CARDS', selectionId: `${marketsResults.teamB.id}_CARD_2` }
-                ])}
-              </div>
-            )}
-
-            {activeMarketTab === 'tips' && (
-              <div style={{ padding: '1rem 1.5rem' }} className="fade-in">
-                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem' }}>
-                  Análisis estratégico del algoritmo para {marketsResults.teamA.name} vs {marketsResults.teamB.name}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                  <div className="tip-box" style={{ margin: 0 }}>
-                    <div className="tip-header">✅ Resultado más probable</div>
-                    <div className="tip-text">
-                      <strong>
-                        {marketsResults.probA > marketsResults.probB
-                          ? `${marketsResults.teamA.name} gana (${marketsResults.probA}%)`
-                          : `${marketsResults.teamB.name} gana (${marketsResults.probB}%)`}
-                      </strong>{' '}
-                      — Basado en la ventaja del Ranking FIFA y la forma física de los planteles.
-                    </div>
-                  </div>
-                  <div className="tip-box yellow" style={{ margin: 0 }}>
-                    <div className="tip-header yellow">📊 Mercado de Goles</div>
-                    <div className="tip-text">
-                      <strong>{marketsResults.xgTotal > 2.5 ? 'Más de 2.5 goles' : 'Menos de 2.5 goles'}</strong> — Los goles proyectados conjuntos son de {marketsResults.xgTotal}. El modelo espera un partido {marketsResults.xgTotal > 2.5 ? 'muy dinámico y abierto.' : 'tácticamente cerrado y rocoso.'}
-                    </div>
-                  </div>
-                  <div className="tip-box" style={{ margin: 0 }}>
-                    <div className="tip-header">🎯 Otros Parámetros de Juego Simulados</div>
-                    <div className="tip-text" style={{ fontSize: '0.85rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      <div>🚩 Saques de meta: <strong>{marketsResults.goalKicksA} vs {marketsResults.goalKicksB}</strong></div>
-                      <div>📏 Tiros libres: <strong>{marketsResults.freeKicksA} vs {marketsResults.freeKicksB}</strong></div>
-                      <div>🚫 Fueras de juego: <strong>{marketsResults.offsidesA} vs {marketsResults.offsidesB}</strong></div>
-                      <div>🦶 Córners promedio: <strong>{~~marketsResults.avgCornersA} vs {~~marketsResults.avgCornersB}</strong></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Grid for Schedule and Golden Boot */}
-      <div className="card-grid-2">
+    <div className="unified-dashboard-container fade-in">
+      <div className="ud-grid">
         
-        {/* Daily Schedule Matches */}
-        <div className="glass-card">
-          <div className="panel-title">
-            <Calendar size={18} className="text-gold" />
-            <span>Partidos Destacados de Hoy</span>
+        {/* ================================================== */}
+        {/* COL 1: PREDICTOR SETTINGS SIDEBAR */}
+        {/* ================================================== */}
+        <div className="ud-col glass-panel flex-col gap-4">
+          <div className="panel-header-row">
+            <Sliders size={18} className="text-cyan" />
+            <h3 className="panel-title-text">Ajustes del Modelo</h3>
           </div>
-          <div className="next-matches">
-            {dailyMatches.map(m => {
-              const active = team1Id === m.hId && team2Id === m.aId;
-              return (
-                <div
-                  key={m.hId + '_' + m.aId}
-                  className="match-row"
-                  onClick={() => handleSelectDailyMatch(m.hId, m.aId)}
+
+          {/* Quick Team Search and Match Selector */}
+          <div className="team-picker-section" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+            <div className="ud-section-title">Buscar Selecciones</div>
+            <div className="team-search-box" style={{ marginBottom: '0.5rem' }}>
+              <Search size={14} className="search-icon" />
+              <input 
+                type="text" 
+                placeholder="Rápido: Local / Visita..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="clean-search-input"
+              />
+            </div>
+
+            {searchQuery && (
+              <div className="quick-search-results" style={{ width: 'calc(100% - 2.5rem)' }}>
+                {filteredTeams.slice(0, 5).map(t => (
+                  <div key={t.id} className="search-result-row">
+                    <span>{t.flag} {t.name}</span>
+                    <div className="flex gap-2">
+                      <button className="small-action-btn local" onClick={() => { setTeam1Id(t.id); setSearchQuery(''); }}>Local</button>
+                      <button className="small-action-btn visit" onClick={() => { setTeam2Id(t.id); setSearchQuery(''); }}>Visita</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <div className="flex-col gap-1">
+                <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 700 }}>LOCAL (A)</span>
+                <select 
+                  value={team1Id} 
+                  onChange={(e) => setTeam1Id(e.target.value)}
                   style={{
-                    border: active ? '1px solid var(--accent-cyan)' : '',
-                    background: active ? 'rgba(0, 242, 254, 0.05)' : ''
+                    background: '#0d1527',
+                    border: '1px solid var(--border-glass)',
+                    color: 'white',
+                    padding: '0.45rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    outline: 'none'
                   }}
                 >
-                  <div className="mdate" style={{ color: active ? 'var(--accent-cyan)' : 'var(--text-muted)' }}>
-                    {m.date}
+                  {sortedTeams.map(t => (
+                    <option key={t.id} value={t.id}>{t.flag} {t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex-col gap-1">
+                <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 700 }}>VISITANTE (B)</span>
+                <select 
+                  value={team2Id} 
+                  onChange={(e) => setTeam2Id(e.target.value)}
+                  style={{
+                    background: '#0d1527',
+                    border: '1px solid var(--border-glass)',
+                    color: 'white',
+                    padding: '0.45rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  {sortedTeams.map(t => (
+                    <option key={t.id} value={t.id}>{t.flag} {t.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Parameters Sliders */}
+          <div className="sliders-section flex-col gap-3">
+            <div className="ud-section-title">Parámetros del Partido</div>
+            
+            <div className="slider-item">
+              <div className="slider-label-row">
+                <span>form / moral</span>
+                <span className="text-cyan">{sliderForm}%</span>
+              </div>
+              <input type="range" min="30" max="100" value={sliderForm} onChange={(e) => setSliderForm(Number(e.target.value))} className="custom-range" />
+            </div>
+
+            <div className="slider-item">
+              <div className="slider-label-row">
+                <span>squad depth</span>
+                <span className="text-cyan">{sliderSquad}%</span>
+              </div>
+              <input type="range" min="40" max="100" value={sliderSquad} onChange={(e) => setSliderSquad(Number(e.target.value))} className="custom-range" />
+            </div>
+
+            <div className="slider-item">
+              <div className="slider-label-row">
+                <span>fifa ranking wt</span>
+                <span className="text-cyan">{sliderHistory}%</span>
+              </div>
+              <input type="range" min="20" max="100" value={sliderHistory} onChange={(e) => setSliderHistory(Number(e.target.value))} className="custom-range" />
+            </div>
+
+            <div className="slider-item">
+              <div className="slider-label-row">
+                <span>venue factor</span>
+                <span className="text-cyan">{sliderVenue}%</span>
+              </div>
+              <input type="range" min="0" max="100" value={sliderVenue} onChange={(e) => setSliderVenue(Number(e.target.value))} className="custom-range" />
+            </div>
+
+            <div className="slider-item">
+              <div className="slider-label-row">
+                <span>climate factor</span>
+                <span className="text-cyan">{sliderWeather}%</span>
+              </div>
+              <input type="range" min="0" max="100" value={sliderWeather} onChange={(e) => setSliderWeather(Number(e.target.value))} className="custom-range" />
+            </div>
+          </div>
+
+          {/* Featured Matches Selector */}
+          <div className="flex-col gap-2">
+            <div className="ud-section-title">Partidos Destacados de Hoy</div>
+            <div className="flex-col gap-2">
+              {todayMatches.map(m => {
+                const active = team1Id === m.hId && team2Id === m.aId;
+                return (
+                  <div
+                    key={`${m.hId}-${m.aId}`}
+                    onClick={() => handleSelectDailyMatch(m.hId, m.aId)}
+
+                    className={`pick-row ${active ? 'active-node' : ''}`}
+                    style={{
+                      cursor: 'pointer',
+                      border: active ? '1px solid var(--accent-cyan)' : '1px solid rgba(255,255,255,0.03)',
+                      background: active ? 'rgba(0, 242, 254, 0.05)' : 'rgba(255,255,255,0.01)',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, color: 'white' }}>{m.hName} vs {m.aName}</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Predecir →</span>
                   </div>
-                  <div className="mteams">
-                    <span>{m.hName}</span>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.75rem' }}>vs</span>
-                    <span>{m.aName}</span>
-                  </div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.note}</span>
-                  <button className="mbtn" style={{ borderColor: active ? 'var(--accent-cyan)' : '' }}>
-                    Predecir →
-                  </button>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Golden Boot Widget */}
-        <div className="glass-card">
-          <div className="panel-title">
-            <Trophy size={18} className="text-gold" />
-            <span>🥇 Líderes Bota de Oro Mundial 2026</span>
+        {/* ================================================== */}
+        {/* COL 2: MAIN PREDICTION ARENA & MARKETS */}
+        {/* ================================================== */}
+        <div className="ud-col glass-panel flex-col gap-4">
+          <div className="panel-header-row">
+            <Activity size={18} className="text-cyan" />
+            <h3 className="panel-title-text">Simulación de Enfrentamiento</h3>
           </div>
-          
-          <div className="table-container">
-            <table className="golden-boot-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Jugador</th>
-                  <th style={{ textAlign: 'center' }}>Goles</th>
-                  <th style={{ textAlign: 'center' }}>Asist.</th>
-                  <th style={{ textAlign: 'center' }}>Bota %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {goldenBootList.map((p, idx) => (
-                  <tr key={p.name}>
-                    <td>
-                      <span className={`rank-badge ${idx === 0 ? 'r1' : (idx === 1 ? 'r2' : (idx === 2 ? 'r3' : ''))}`}>
-                        {p.rank}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="player-cell">
-                        <span className="pflag">{p.flag}</span>
-                        <div>
-                          <div className="pname" style={{ fontSize: '0.85rem' }}>{p.name}</div>
-                          <div className="pteam" style={{ fontSize: '0.75rem' }}>{p.team}</div>
+
+          {/* Versus Header Box */}
+          <div className="matchup-versus-display" style={{ margin: '0.5rem 0', justifyContent: 'center', gap: '3rem' }}>
+            <div className="team-badge-circle">
+              <span className="big-flag" style={{ fontSize: '3rem' }}>{t1.flag}</span>
+              <span className="circle-team-name" style={{ fontSize: '1rem' }}>{t1.name}</span>
+            </div>
+            <div className="vs-badge" style={{ width: '42px', height: '42px', fontSize: '1rem' }}>VS</div>
+            <div className="team-badge-circle">
+              <span className="big-flag" style={{ fontSize: '3rem' }}>{t2.flag}</span>
+              <span className="circle-team-name" style={{ fontSize: '1rem' }}>{t2.name}</span>
+            </div>
+          </div>
+
+          {/* Crawler Search Button & simulated Console */}
+          <div className="crawler-console-section flex-col gap-2">
+            {!isCrawling ? (
+              <button className="primary-btn" onClick={handleCalculateWithCrawling} style={{ alignSelf: 'center', width: '100%', maxWidth: '420px', padding: '0.75rem' }}>
+                <Terminal size={16} />
+                <span>🚀 BUSCAR DATOS Y CALCULAR PROBABILIDAD</span>
+              </button>
+            ) : (
+              <div className="terminal-box">
+                <div className="terminal-header">
+                  <div className="term-dot red"></div>
+                  <div className="term-dot yellow"></div>
+                  <div className="term-dot green"></div>
+                  <span className="term-title">crawling_sports_databases.sh</span>
+                </div>
+                <div className="terminal-body">
+                  {consoleLines.map((line, idx) => (
+                    <div key={idx} className="terminal-line">
+                      <span className="term-prompt">$</span> {line}
+                    </div>
+                  ))}
+                  <div className="terminal-progress-row">
+                    <span className="term-blink">█</span> Escaneando fuentes... {crawlingProgress}%
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Results Output (Hidden during crawling) */}
+          {!isCrawling && marketsResults && (
+            <div className="prediction-results-area flex-col gap-4 fade-in" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+              
+              {/* Score breakdown */}
+              <div className="score-prediction-card flex-col align-center" style={{ textAlign: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Marcador más probable</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)', color: 'white', display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
+                  <span>{marketsResults.teamA.name}</span>
+                  <span className="text-cyan">{marketsResults.scoreA} – {marketsResults.scoreB}</span>
+                  <span>{marketsResults.teamB.name}</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  {marketsResults.teamA.name} ({marketsResults.probA}%) | Empate ({marketsResults.probDraw}%) | {marketsResults.teamB.name} ({marketsResults.probB}%)
+                </div>
+              </div>
+
+              {/* Advanced Markets tabs */}
+              <div>
+                <div className="tabs" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.2rem' }}>
+                  {['resultado', 'goles', 'jugadores', 'corners', 'tarjetas', 'tips'].map(tab => (
+                    <button
+                      key={tab}
+                      className={`tab-btn ${activeMarketTab === tab ? 'active' : ''}`}
+                      onClick={() => setActiveMarketTab(tab as any)}
+                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
+                    >
+                      {tab.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="markets-display" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                  {activeMarketTab === 'resultado' && (
+                    <div className="markets-grid" style={{ gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                      {renderMarketCard('1X2 (Tiempo Reglamentario)', marketsResults.markets['1X2'])}
+                      {renderMarketCard('Doble Oportunidad', marketsResults.markets['doubleChance'])}
+                      {renderMarketCard('Ambos Equipos Anotan (BTTS)', marketsResults.markets['btts'])}
+                      {renderMarketCard('Marcadores Exactos más Probables', marketsResults.markets['exactScore'])}
+                    </div>
+                  )}
+
+                  {activeMarketTab === 'goles' && (
+                    <div className="markets-grid" style={{ gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                      {renderMarketCard('Total de Goles (Over)', marketsResults.markets['totalGoals'])}
+                      {renderMarketCard(`Goles de ${marketsResults.teamA.name}`, [
+                        { n: 'Marca al menos 1', p: Math.round((1 - Math.exp(-marketsResults.xgA)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgA)) * 100)), marketType: 'TEAM_GOALS', selectionId: `${marketsResults.teamA.id}_GOAL_1` },
+                        { n: 'Marca 2 o más', p: Math.round((1 - Math.exp(-marketsResults.xgA) - marketsResults.xgA * Math.exp(-marketsResults.xgA)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgA) - marketsResults.xgA * Math.exp(-marketsResults.xgA)) * 100)), marketType: 'TEAM_GOALS', selectionId: `${marketsResults.teamA.id}_GOAL_2` }
+                      ])}
+                      {renderMarketCard(`Goles de ${marketsResults.teamB.name}`, [
+                        { n: 'Marca al menos 1', p: Math.round((1 - Math.exp(-marketsResults.xgB)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgB)) * 100)), marketType: 'TEAM_GOALS', selectionId: `${marketsResults.teamB.id}_GOAL_1` },
+                        { n: 'Marca 2 o más', p: Math.round((1 - Math.exp(-marketsResults.xgB) - marketsResults.xgB * Math.exp(-marketsResults.xgB)) * 100), odds: probToOdds(Math.round((1 - Math.exp(-marketsResults.xgB) - marketsResults.xgB * Math.exp(-marketsResults.xgB)) * 100)), marketType: 'TEAM_GOALS', selectionId: `${marketsResults.teamB.id}_GOAL_2` }
+                      ])}
+                    </div>
+                  )}
+
+                  {activeMarketTab === 'jugadores' && (
+                    <div className="markets-grid" style={{ gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                      {renderMarketCard('Anota en Cualquier Momento', marketsResults.markets['anytimeGoal'])}
+                      {renderMarketCard('Primer Goleador del Encuentro', marketsResults.markets['firstGoal'])}
+                      {renderMarketCard('Asistente de Gol', marketsResults.markets['anytimeAssist'])}
+                    </div>
+                  )}
+
+                  {activeMarketTab === 'corners' && (
+                    <div className="markets-grid" style={{ gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                      {renderMarketCard('Total de Córners (Over)', marketsResults.markets['corners'])}
+                    </div>
+                  )}
+
+                  {activeMarketTab === 'tarjetas' && (
+                    <div className="markets-grid" style={{ gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                      {renderMarketCard('Total de Tarjetas Amarillas', marketsResults.markets['bookings'])}
+                    </div>
+                  )}
+
+                  {activeMarketTab === 'tips' && (
+                    <div className="flex-col gap-2" style={{ padding: '0.5rem' }}>
+                      <div className="tip-box" style={{ margin: 0 }}>
+                        <div className="tip-header">✅ Resultado más probable</div>
+                        <div className="tip-text">
+                          <strong>{marketsResults.probA > marketsResults.probB ? t1.name : t2.name} gana</strong>. Coeficiente de confianza del algoritmo: {marketsResults.confidence}%.
                         </div>
                       </div>
-                    </td>
-                    <td style={{ textAlign: 'center' }} className="goals-big">{p.g}</td>
-                    <td style={{ textAlign: 'center', color: 'var(--accent-blue)', fontWeight: 'bold' }}>{p.a}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span className="prob-chip" style={{ fontSize: '0.75rem' }}>{p.pb}%</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div className="tip-box yellow" style={{ margin: 0 }}>
+                        <div className="tip-header yellow">📊 Mercado de Goles</div>
+                        <div className="tip-text">
+                          El xG conjunto de ambos equipos es de <strong>{marketsResults.xgTotal}</strong> goles. {marketsResults.xgTotal > 2.5 ? 'Se proyecta un juego dinámico y abierto.' : 'Se proyecta un partido tácticamente cerrado.'}
+                        </div>
+                      </div>
+                      <div className="tip-box" style={{ margin: 0 }}>
+                        <div className="tip-header">🎯 Otros Parámetros de Juego Proyectados</div>
+                        <div className="tip-text" style={{ fontSize: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem', marginTop: '0.25rem' }}>
+                          <div>🚩 Saques de meta: <strong>{marketsResults.goalKicksA} vs {marketsResults.goalKicksB}</strong></div>
+                          <div>📏 Tiros libres: <strong>{marketsResults.freeKicksA} vs {marketsResults.freeKicksB}</strong></div>
+                          <div>🚫 Fueras de juego: <strong>{marketsResults.offsidesA} vs {marketsResults.offsidesB}</strong></div>
+                          <div>🦶 Córners promedio: <strong>{~~marketsResults.avgCornersA} vs {~~marketsResults.avgCornersB}</strong></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* Model information disclaimer */}
+          <div className="home-disclaimer-box" style={{ marginTop: 'auto' }}>
+            <ShieldAlert size={14} className="text-gold" />
+            <span>
+              Cálculos ejecutados mediante matrices probabilísticas locales. No se exponen datos personales a servidores externos.
+            </span>
+          </div>
+        </div>
+
+        {/* ================================================== */}
+        {/* COL 3: LAST MINUTE LINEUPS EDITOR */}
+        {/* ================================================== */}
+        <div className="ud-col glass-panel flex-col gap-4">
+          <div className="panel-header-row">
+            <RefreshCw size={18} className="text-gold" />
+            <h3 className="panel-title-text">Alineaciones de Último Minuto</h3>
+          </div>
+
+          <div className="active-lineup-editor glass-subcard" style={{ padding: '0.5rem', background: 'transparent', border: 'none', margin: 0 }}>
+            <div className="editor-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+              <span className="editor-title" style={{ fontSize: '0.7rem' }}>XI inicial y Tácticas</span>
+              <div className="flex items-center gap-2">
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Usar oficial</span>
+                <input 
+                  type="checkbox" 
+                  checked={useOfficialLineups} 
+                  onChange={(e) => setUseOfficialLineups(e.target.checked)}
+                  style={{ cursor: 'pointer' }}
+                />
+              </div>
+            </div>
+
+            {useOfficialLineups ? (
+              <div className="flex-col gap-4">
+                
+                {/* Team A Lineup starters list */}
+                <div className="flex-col gap-2">
+                  <div className="lineup-team-title">
+                    <span>{t1.flag} {t1.name}</span>
+                    <span className="formation-badge">{lineupA?.formation || '4-3-3'}</span>
+                  </div>
+                  <div className="players-starters-list" style={{ maxHeight: '180px' }}>
+                    {t1.players.map(p => {
+                      const starting = lineupA?.startingXI.includes(p.name);
+                      return (
+                        <div 
+                          key={p.name} 
+                          className={`player-toggle-row ${starting ? 'starter' : 'benched'}`}
+                          onClick={() => handleTogglePlayer(p, true)}
+                        >
+                          <span className="p-pos">{p.position}</span>
+                          <span className="p-name" style={{ fontSize: '0.72rem' }}>{p.name}</span>
+                          <span className="p-status-indicator">{starting ? 'Titular' : 'Banca'}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Team B Lineup starters list */}
+                <div className="flex-col gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem' }}>
+                  <div className="lineup-team-title">
+                    <span>{t2.flag} {t2.name}</span>
+                    <span className="formation-badge">{lineupB?.formation || '4-3-3'}</span>
+                  </div>
+                  <div className="players-starters-list" style={{ maxHeight: '180px' }}>
+                    {t2.players.map(p => {
+                      const starting = lineupB?.startingXI.includes(p.name);
+                      return (
+                        <div 
+                          key={p.name} 
+                          className={`player-toggle-row ${starting ? 'starter' : 'benched'}`}
+                          onClick={() => handleTogglePlayer(p, false)}
+                        >
+                          <span className="p-pos">{p.position}</span>
+                          <span className="p-name" style={{ fontSize: '0.72rem' }}>{p.name}</span>
+                          <span className="p-status-indicator">{starting ? 'Titular' : 'Banca'}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            ) : (
+              <div className="inactive-editor-message">
+                <AlertCircle size={16} className="text-muted" />
+                <span style={{ fontSize: '0.72rem' }}>Activa "Usar oficial" para modificar el once titular.</span>
+              </div>
+            )}
           </div>
         </div>
 
       </div>
-
     </div>
   );
 };

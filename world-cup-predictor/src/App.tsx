@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
-import type { ModelWeights, SimulationStats } from './utils/simulatorEngine';
-import { runMonteCarloSimulation } from './utils/simulatorEngine';
+import type { Team } from './data/teamsData';
+import { teamsData } from './data/teamsData';
+import type { ModelWeights, SimulationStats, GroupStanding } from './utils/simulatorEngine';
+import { runMonteCarloSimulation, simulateGroup } from './utils/simulatorEngine';
+import { Home } from './components/Home';
+import { Dashboard } from './components/Dashboard';
 import { KlementSimulator } from './components/KlementSimulator';
 import { BracketSimulator } from './components/BracketSimulator';
 import { PlayerProfile } from './components/PlayerProfile';
 import { MatchPredictor } from './components/MatchPredictor';
 import { BettingSlip } from './components/BettingSlip';
 import type { BetSelection } from './components/BettingSlip';
-import { Trophy, Sliders, GitPullRequest, Award, Percent } from 'lucide-react';
-import { UnifiedDashboard } from './components/UnifiedDashboard';
+import { Trophy, Sliders, GitPullRequest, Award, Percent, Home as HomeIcon } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'bracket' | 'messi' | 'predictor'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'simulator' | 'bracket' | 'messi' | 'predictor'>('home');
   
   // Model weights state (defaults close to Joachim Klement's findings, with a 25% luck factor)
   const [weights, setWeights] = useState<ModelWeights>({
@@ -30,6 +33,7 @@ export default function App() {
   
   // Simulation results
   const [predictions, setPredictions] = useState<Record<string, SimulationStats>>({});
+  const [groupStandings, setGroupStandings] = useState<Record<string, GroupStanding[]>>({});
 
   // Betting Slip State
   const [selections, setSelections] = useState<BetSelection[]>([]);
@@ -54,6 +58,18 @@ export default function App() {
 
   // Compute standings and initial predictions on load or weight change
   const computeInitialResults = () => {
+    const groups: Record<string, Team[]> = {};
+    teamsData.forEach(t => {
+      if (!groups[t.group]) groups[t.group] = [];
+      groups[t.group].push(t);
+    });
+
+    const standings: Record<string, GroupStanding[]> = {};
+    Object.keys(groups).forEach(g => {
+      standings[g] = simulateGroup(groups[g], weights, messiImpact);
+    });
+    setGroupStandings(standings);
+
     if (Object.keys(predictions).length === 0) {
       const initialPreds = runMonteCarloSimulation(weights, 500, messiImpact);
       setPredictions(initialPreds);
@@ -71,6 +87,18 @@ export default function App() {
         });
         
         setPredictions(results);
+        
+        const groups: Record<string, Team[]> = {};
+        teamsData.forEach(t => {
+          if (!groups[t.group]) groups[t.group] = [];
+          groups[t.group].push(t);
+        });
+        
+        const standings: Record<string, GroupStanding[]> = {};
+        Object.keys(groups).forEach(g => {
+          standings[g] = simulateGroup(groups[g], weights, messiImpact);
+        });
+        setGroupStandings(standings);
 
       } catch (err) {
         console.error('Error running Monte Carlo simulation:', err);
@@ -99,6 +127,13 @@ export default function App() {
         </div>
 
         <nav className="nav-tabs">
+          <button 
+            className={`nav-tab ${activeTab === 'home' ? 'active' : ''}`}
+            onClick={() => setActiveTab('home')}
+          >
+            <HomeIcon size={16} />
+            <span>Inicio</span>
+          </button>
           <button 
             className={`nav-tab ${activeTab === 'predictor' ? 'active' : ''}`}
             onClick={() => setActiveTab('predictor')}
@@ -139,6 +174,10 @@ export default function App() {
 
       {/* Main body area */}
       <main className="main-content">
+        {activeTab === 'home' && (
+          <Home onNavigate={setActiveTab} />
+        )}
+
         {activeTab === 'predictor' && (
           <MatchPredictor
             weights={weights}
@@ -151,9 +190,10 @@ export default function App() {
         )}
 
         {activeTab === 'dashboard' && (
-          <UnifiedDashboard 
-            weights={weights} 
-            messiImpact={messiImpact}
+          <Dashboard 
+            teams={teamsData} 
+            predictions={predictions} 
+            groupStandings={groupStandings} 
           />
         )}
         
