@@ -1,0 +1,63 @@
+export interface TeamLineup {
+  formation: string;
+  startingXI: string[];
+  substitutes: string[];
+  lastUpdated: string;
+}
+
+export const mockLineups: Record<string, TeamLineup> = {
+  ECU: {
+    formation: '4-3-3',
+    startingXI: ['H. Galíndez', 'P. Hincapié', 'W. Pacho', 'F. Torres', 'A. Preciado', 'M. Caicedo', 'A. Franco', 'K. Páez', 'J. Sarmiento', 'E. Valencia', 'K. Rodríguez'],
+    substitutes: ['A. Domínguez', 'J. Ortiz', 'J. Cifuentes', 'A. Minda', 'J. Caicedo'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  },
+  GER: {
+    formation: '4-2-3-1',
+    startingXI: ['M. ter Stegen', 'M. Mittelstädt', 'J. Tah', 'A. Rüdiger', 'J. Kimmich', 'T. Kroos', 'R. Andrich', 'F. Wirtz', 'I. Gündogan', 'J. Musiala', 'K. Havertz'],
+    substitutes: ['O. Baumann', 'N. Schlotterbeck', 'D. Raum', 'P. Groß', 'L. Sané', 'N. Füllkrug', 'D. Undav'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  },
+  CAN: {
+    formation: '4-4-2',
+    startingXI: ['M. Crépeau', 'A. Davies', 'D. Cornelius', 'M. Bombito', 'A. Johnston', 'J. Shaffelburg', 'S. Eustáquio', 'I. Koné', 'T. Buchanan', 'Jonathan David', 'C. Larin'],
+    substitutes: ['D. St. Clair', 'K. Miller', 'S. Adekugbe', 'J. Osorio', 'T. Oluwaseyi'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  },
+  SUI: {
+    formation: '5-4-1', // Defensive formation test
+    startingXI: ['Y. Sommer', 'R. Rodríguez', 'M. Akanji', 'F. Schär', 'L. Stergiou', 'S. Widmer', 'G. Xhaka', 'R. Freuler', 'D. Ndoye', 'R. Vargas', 'B. Embolo'],
+    substitutes: ['G. Kobel', 'C. Zesiger', 'X. Shaqiri', 'Z. Amdouni', 'V. Sierro'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  },
+  CUR: {
+    formation: '4-2-3-1',
+    startingXI: ['E. Room', 'S. Floranus', 'J. Gaari', 'R. Martina', 'K. Janga', 'V. Anita', 'L. Bacuna', 'J. Bacuna', 'G. Kastaneer', 'R. Alberg', 'G. Kuwas'],
+    substitutes: ['T. Bodak', 'S. van Eijma', 'K. Felida', 'Q. Jakoba', 'C. Vicento'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  },
+  CIV: {
+    formation: '4-3-3',
+    startingXI: ['Y. Fofana', 'G. Konan', 'E. Ndicka', 'O. Diomande', 'W. Singo', 'S. Fofana', 'F. Kessié', 'I. Sangaré', 'S. Adingra', 'S. Haller', 'N. Pépé'],
+    substitutes: ['B. Sangaré', 'W. Boly', 'J. Seri', 'K. Kossounou', 'K. Konaté', 'O. Diakité'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  },
+  BRA: {
+    formation: '4-3-3',
+    startingXI: ['Alisson', 'Wendell', 'Marquinhos', 'Gabriel Magalhães', 'Danilo', 'Bruno Guimarães', 'João Gomes', 'Lucas Paquetá', 'Vinícius Júnior', 'Rodrygo', 'Raphinha'],
+    substitutes: ['Bento', 'Lucas Beraldo', 'Andreas Pereira', 'Douglas Luiz', 'Savinho', 'Endrick'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  },
+  SCO: {
+    formation: '5-3-2', // Ultra defensive
+    startingXI: ['A. Gunn', 'A. Robertson', 'K. Tierney', 'G. Hanley', 'J. Hendry', 'A. Ralston', 'C. McGregor', 'B. Gilmour', 'S. McTominay', 'J. McGinn', 'L. Shankland'],
+    substitutes: ['L. Kelly', 'R. Porteous', 'K. McLean', 'R. Christie', 'C. Adams'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  },
+  ARG: {
+    formation: '4-3-3',
+    startingXI: ['E. Martínez', 'N. Tagliafico', 'N. Otamendi', 'C. Romero', 'N. Molina', 'A. Mac Allister', 'E. Fernández', 'R. De Paul', 'N. González', 'L. Martínez', 'L. Messi'],
+    substitutes: ['G. Rulli', 'L. Martínez Quarta', 'G. Pezzella', 'L. Paredes', 'G. Lo Celso', 'Á. Di María', 'J. Álvarez'],
+    lastUpdated: '2026-06-25T17:30:00Z'
+  }
+};
