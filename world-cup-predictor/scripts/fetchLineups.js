@@ -66,9 +66,30 @@ const MOCK_DATA = {
   }
 };
 
+// Load environment variables from .env file locally if not already set
+if (!process.env.API_FOOTBALL_KEY) {
+  try {
+    const envPath = path.join(__dirname, '../.env');
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const lines = envContent.split('\n');
+      for (const line of lines) {
+        const match = line.match(/^\s*API_FOOTBALL_KEY\s*=\s*(.*)\s*$/);
+        if (match) {
+          process.env.API_FOOTBALL_KEY = match[1].trim().replace(/['"]/g, '');
+          break;
+        }
+      }
+    }
+  } catch (err) {
+    // Ignore error loading .env
+  }
+}
+
 // API configuration
 const API_KEY = process.env.API_FOOTBALL_KEY;
 const API_URL = 'https://v3.football.api-sports.io/fixtures/lineups';
+
 
 async function fetchLiveLineups() {
   if (!API_KEY) {
