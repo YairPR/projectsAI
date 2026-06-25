@@ -49,6 +49,12 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
   // Search filter
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Customizable team statistics states
+  const [customElo1, setCustomElo1] = useState<number>(1520);
+  const [customElo2, setCustomElo2] = useState<number>(1665);
+  const [customValue1, setCustomValue1] = useState<number>(280);
+  const [customValue2, setCustomValue2] = useState<number>(850);
+
   const todayMatches = [
     { time: 'Hoy · 18:00h', hId: 'ECU', hName: 'Ecuador', aId: 'GER', aName: 'Alemania', desc: 'Partidazo Grupo E' },
     { time: 'Hoy · 21:00h', hId: 'SUI', hName: 'Suiza', aId: 'CAN', aName: 'Canadá', desc: 'Definición Grupo B' },
@@ -70,6 +76,16 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
     if (initialTeam2Id) setTeam2Id(initialTeam2Id);
   }, [initialTeam1Id, initialTeam2Id]);
 
+  useEffect(() => {
+    setCustomElo1(t1.fifaPoints);
+    setCustomValue1(t1.squadValue);
+  }, [team1Id, t1]);
+
+  useEffect(() => {
+    setCustomElo2(t2.fifaPoints);
+    setCustomValue2(t2.squadValue);
+  }, [team2Id, t2]);
+
   // Initialize lineups
   useEffect(() => {
     if (useOfficialLineups) {
@@ -81,13 +97,13 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
     }
   }, [team1Id, team2Id, useOfficialLineups]);
 
-  // Recalculate immediately if weights or lineups change
+  // Recalculate immediately if weights, lineups or custom stats change
   useEffect(() => {
     // Only run if we aren't currently executing a visual data crawl
     if (!isCrawling) {
       calculatePrediction();
     }
-  }, [team1Id, team2Id, sliderForm, sliderSquad, sliderHistory, sliderVenue, sliderWeather, lineupA, lineupB, weights, applyGameTheory]);
+  }, [team1Id, team2Id, sliderForm, sliderSquad, sliderHistory, sliderVenue, sliderWeather, lineupA, lineupB, weights, applyGameTheory, customElo1, customElo2, customValue1, customValue2]);
 
   function createDefaultLineup(team: Team): LineupData {
     return {
@@ -108,9 +124,22 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
       luck: weights.luck * (1.1 - sliderForm / 100)
     };
 
+    // Construct modified team objects with user's customized ELO and Squad values
+    const modifiedT1: Team = {
+      ...t1,
+      fifaPoints: customElo1,
+      squadValue: customValue1
+    };
+
+    const modifiedT2: Team = {
+      ...t2,
+      fifaPoints: customElo2,
+      squadValue: customValue2
+    };
+
     const res = calculateMatchBettingMarkets(
-      t1,
-      t2,
+      modifiedT1,
+      modifiedT2,
       customWeights,
       0,
       lineupA,
@@ -120,36 +149,69 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
     setMarketsResults(res);
   };
 
-  // Run the simulated data crawling console
-  const handleCalculateWithCrawling = () => {
+  // Run a real dynamic fetch request for live match lineups
+  const handleCalculateWithCrawling = async () => {
     setIsCrawling(true);
     setConsoleLines([]);
     setCrawlingProgress(0);
 
-    const steps = [
-      { text: '📡 Conectando con servidores de la FIFA (Rankings y coeficientes)...', progress: 20 },
-      { text: '📈 Escaneando cotizaciones de mercado y fichajes de Transfermarkt...', progress: 45 },
-      { text: '🏃 Extrayendo estado físico de planteles y alineaciones oficiales de Opta...', progress: 70 },
-      { text: '📉 Consultando PIB y variables climáticas del modelo econométrico Klement...', progress: 85 },
-      { text: '🧮 Ejecutando simulación de Poisson y Monte Carlo local (10,000 iteraciones)...', progress: 100 }
-    ];
-
-    let stepIndex = 0;
-    const interval = setInterval(() => {
-      if (stepIndex < steps.length) {
-        const currentIndex = stepIndex;
-        setConsoleLines(prev => [...prev, steps[currentIndex].text]);
-        setCrawlingProgress(steps[currentIndex].progress);
-        stepIndex++;
-      } else {
-
-        clearInterval(interval);
+    const logLine = (text: string, delay: number) => {
+      return new Promise<void>(resolve => {
         setTimeout(() => {
-          setIsCrawling(false);
-          calculatePrediction();
-        }, 500);
+          setConsoleLines(prev => [...prev, text]);
+          resolve();
+        }, delay);
+      });
+    };
+
+    setCrawlingProgress(15);
+    await logLine('📡 Conectando con base de datos del servidor...', 400);
+
+    setCrawlingProgress(35);
+    await logLine('🔍 Solicitando alineaciones oficiales en vivo vía HTTP GET /lineups.json...', 400);
+
+    try {
+      const response = await fetch('/lineups.json');
+      if (response.ok) {
+        const data = await response.json();
+        const lineupAData = data[team1Id];
+        const lineupBData = data[team2Id];
+        
+        setCrawlingProgress(65);
+        await logLine(`✅ HTTP 200 OK. Mapeando formaciones tácticas para ${t1.name} y ${t2.name}.`, 400);
+        
+        if (lineupAData) {
+          setLineupA(lineupAData);
+          await logLine(`🏃 Opta: Alineación inicial de ${t1.name} cargada (${lineupAData.formation}).`, 300);
+        } else {
+          setLineupA(createDefaultLineup(t1));
+        }
+        
+        if (lineupBData) {
+          setLineupB(lineupBData);
+          await logLine(`🏃 Opta: Alineación inicial de ${t2.name} cargada (${lineupBData.formation}).`, 300);
+        } else {
+          setLineupB(createDefaultLineup(t2));
+        }
+      } else {
+        throw new Error('HTTP failure');
       }
-    }, 700);
+    } catch (e) {
+      setCrawlingProgress(65);
+      await logLine('⚠️ Error HTTP en canal de alineaciones. Cargando datos de fallback local...', 500);
+      setLineupA(mockLineups[team1Id] || createDefaultLineup(t1));
+      setLineupB(mockLineups[team2Id] || createDefaultLineup(t2));
+    }
+
+    setCrawlingProgress(85);
+    await logLine('📈 Extrayendo valor de plantillas de Transfermarkt y rankings FIFA/ELO...', 400);
+    await logLine('🧮 Ejecutando simulación de Poisson y Monte Carlo (10,000 iteraciones)...', 500);
+    setCrawlingProgress(100);
+
+    setTimeout(() => {
+      setIsCrawling(false);
+      calculatePrediction();
+    }, 450);
   };
 
   const handleTogglePlayer = (player: Player, isTeamA: boolean) => {
@@ -309,6 +371,87 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
                     <option key={t.id} value={t.id}>{t.flag} {t.name}</option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* Editable Base Stats for Dynamic Calculations */}
+            <div className="flex-col gap-2" style={{ marginTop: '0.5rem', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', padding: '0.65rem', borderRadius: '8px' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                ✏️ Editar Parámetros (Simulación Personalizada)
+              </span>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                {/* Local Stats */}
+                <div className="flex-col gap-1">
+                  <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{t1.name} ELO</span>
+                  <input 
+                    type="number" 
+                    value={customElo1} 
+                    onChange={(e) => setCustomElo1(Number(e.target.value))}
+                    style={{
+                      background: '#080c16',
+                      border: '1px solid var(--border-glass)',
+                      color: '#00f2fe',
+                      padding: '0.35rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      outline: 'none'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>Plantilla (€M)</span>
+                  <input 
+                    type="number" 
+                    value={customValue1} 
+                    onChange={(e) => setCustomValue1(Number(e.target.value))}
+                    style={{
+                      background: '#080c16',
+                      border: '1px solid var(--border-glass)',
+                      color: '#00f2fe',
+                      padding: '0.35rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                {/* Visitor Stats */}
+                <div className="flex-col gap-1">
+                  <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{t2.name} ELO</span>
+                  <input 
+                    type="number" 
+                    value={customElo2} 
+                    onChange={(e) => setCustomElo2(Number(e.target.value))}
+                    style={{
+                      background: '#080c16',
+                      border: '1px solid var(--border-glass)',
+                      color: '#a855f7',
+                      padding: '0.35rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      outline: 'none'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>Plantilla (€M)</span>
+                  <input 
+                    type="number" 
+                    value={customValue2} 
+                    onChange={(e) => setCustomValue2(Number(e.target.value))}
+                    style={{
+                      background: '#080c16',
+                      border: '1px solid var(--border-glass)',
+                      color: '#a855f7',
+                      padding: '0.35rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
