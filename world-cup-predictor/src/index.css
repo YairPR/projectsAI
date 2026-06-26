@@ -2171,10 +2171,9 @@ button, input, select {
 
 /* Stadium Hero Background from User Upload 3 */
 .stadium-hero-bg {
-  background-image: url('/stadium_bg.jpg') !important;
-  background-size: cover !important;
-  background-position: center 30% !important;
-  border: 1px solid rgba(0, 242, 254, 0.2) !important;
+  background: rgba(13, 21, 39, 0.45) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 242, 254, 0.15) !important;
 }
 
 .hero-overlay {
@@ -2685,6 +2684,17 @@ button, input, select {
   .header {
     padding: 0.75rem 1.25rem !important;
   }
+}
+
+/* App-level background transition for Home tab */
+.home-active-bg {
+  background-image: 
+    radial-gradient(circle at center, rgba(8, 12, 22, 0.88) 0%, rgba(8, 12, 22, 0.94) 70%, rgba(8, 12, 22, 0.98) 100%),
+    url('/stadium_bg.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  transition: background 0.5s ease-in-out;
 }
 
 

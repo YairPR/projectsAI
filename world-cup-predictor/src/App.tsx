@@ -64,7 +64,7 @@ export default function App() {
   }, [weights]);
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${activeTab === 'home' ? 'home-active-bg' : ''}`}>
       {/* Premium Header */}
       <header className="header">
         <div className="logo-container" onClick={() => handleNavigate('home')}>
