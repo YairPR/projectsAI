@@ -368,25 +368,25 @@ export const teamsData: Team[] = [
     ]
   },
   {
-    id: 'ROU',
-    name: 'Rumania',
+    id: 'TUR',
+    name: 'Turquía',
     group: 'D',
-    fifaRank: 45,
-    fifaPoints: 1468,
-    gdpPerCapita: 17000,
-    population: 19.0,
-    meanTemp: 9.5,
-    squadValue: 95,
+    fifaRank: 26,
+    fifaPoints: 1530,
+    gdpPerCapita: 10600,
+    population: 85.3,
+    meanTemp: 11.5,
+    squadValue: 320,
     isHost: false,
     continent: 'UEFA',
-    flag: '🇷🇴',
-    averageAge: 26.7,
-    physicalForm: 81,
-    aggressiveness: 68,
+    flag: '🇹🇷',
+    averageAge: 25.8,
+    physicalForm: 83,
+    aggressiveness: 72,
     players: [
-      { name: 'Denis Drăguș', position: 'DEL', age: 26, goals: 1, assists: 0, physicalForm: 83, scoringProb: 0.52, assistProb: 0.20, cardsProb: 0.32 },
-      { name: 'Nicolae Stanciu', position: 'MED', age: 33, goals: 1, assists: 1, physicalForm: 79, scoringProb: 0.40, assistProb: 0.45, cardsProb: 0.38 },
-      { name: 'R. Marin', position: 'MED', age: 30, goals: 0, assists: 1, physicalForm: 82, scoringProb: 0.28, assistProb: 0.40, cardsProb: 0.50 }
+      { name: 'K. Yildiz', position: 'DEL', age: 21, goals: 1, assists: 0, physicalForm: 85, scoringProb: 0.50, assistProb: 0.30, cardsProb: 0.28 },
+      { name: 'H. Calhanoglu', position: 'MED', age: 32, goals: 1, assists: 1, physicalForm: 81, scoringProb: 0.45, assistProb: 0.55, cardsProb: 0.35 },
+      { name: 'Arda Güler', position: 'MED', age: 21, goals: 0, assists: 1, physicalForm: 84, scoringProb: 0.42, assistProb: 0.48, cardsProb: 0.25 }
     ]
   },
 
@@ -796,25 +796,25 @@ export const teamsData: Team[] = [
     ]
   },
   {
-    id: 'BOL',
-    name: 'Bolivia',
+    id: 'IRQ',
+    name: 'Irak',
     group: 'I',
-    fifaRank: 84,
-    fifaPoints: 1270,
-    gdpPerCapita: 3700,
-    population: 12.2,
-    meanTemp: 10.0,
+    fifaRank: 55,
+    fifaPoints: 1420,
+    gdpPerCapita: 5900,
+    population: 43.5,
+    meanTemp: 22.0,
     squadValue: 15,
     isHost: false,
-    continent: 'CONMEBOL',
-    flag: '🇧🇴',
-    averageAge: 25.8,
-    physicalForm: 79,
-    aggressiveness: 76,
+    continent: 'AFC',
+    flag: '🇮🇶',
+    averageAge: 25.5,
+    physicalForm: 80,
+    aggressiveness: 70,
     players: [
-      { name: 'Carmelo Algarañaz', position: 'DEL', age: 30, goals: 1, assists: 0, physicalForm: 80, scoringProb: 0.45, assistProb: 0.15, cardsProb: 0.38 },
-      { name: 'Ramiro Vaca', position: 'MED', age: 26, goals: 0, assists: 1, physicalForm: 82, scoringProb: 0.28, assistProb: 0.35, cardsProb: 0.45 },
-      { name: 'Miguel Terceros', position: 'MED', age: 22, goals: 0, assists: 0, physicalForm: 84, scoringProb: 0.35, assistProb: 0.28, cardsProb: 0.30 }
+      { name: 'Ayman Hussein', position: 'DEL', age: 30, goals: 2, assists: 0, physicalForm: 82, scoringProb: 0.55, assistProb: 0.15, cardsProb: 0.35 },
+      { name: 'Ali Jasim', position: 'MED', age: 22, goals: 0, assists: 1, physicalForm: 83, scoringProb: 0.38, assistProb: 0.45, cardsProb: 0.28 },
+      { name: 'Z. Iqbal', position: 'MED', age: 23, goals: 0, assists: 0, physicalForm: 80, scoringProb: 0.30, assistProb: 0.38, cardsProb: 0.30 }
     ]
   },
   {

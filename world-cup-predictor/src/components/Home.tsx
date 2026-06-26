@@ -7,10 +7,12 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const todayMatches = [
-    { time: 'Hoy · 18:00h', hId: 'ECU', hFlag: '🇪🇨', hName: 'Ecuador', aId: 'GER', aFlag: '🇩🇪', aName: 'Alemania', note: 'Partidazo Grupo E', pHome: 34, pDraw: 26, pAway: 40 },
-    { time: 'Hoy · 21:00h', hId: 'SUI', hFlag: '🇨🇭', hName: 'Suiza', aId: 'CAN', aFlag: '🇨🇦', aName: 'Canadá', note: 'Definición Grupo B', pHome: 42, pDraw: 29, pAway: 29 },
-    { time: 'Hoy · 21:00h', hId: 'CUR', hFlag: '🇨🇼', hName: 'Curazao', aId: 'CIV', aFlag: '🇨🇮', aName: 'Costa de Marfil', note: 'Grupo E - Clave', pHome: 15, pDraw: 22, pAway: 63 },
-    { time: 'Hoy · 23:30h', hId: 'BRA', hFlag: '🇧🇷', hName: 'Brasil', aId: 'SCO', aFlag: '🏴\u200d☠️', aName: 'Escocia', note: 'Grupo C', pHome: 72, pDraw: 18, pAway: 10 }
+    { time: 'Hoy · 21:00h', hId: 'NOR', hFlag: '🇳🇴', hName: 'Noruega', aId: 'FRA', aFlag: '🇫🇷', aName: 'Francia', note: 'Partidazo Grupo I', pHome: 18, pDraw: 22, pAway: 60 },
+    { time: 'Hoy · 21:00h', hId: 'SEN', hFlag: '🇸🇳', hName: 'Senegal', aId: 'IRQ', aFlag: '🇮🇶', aName: 'Irak', note: 'Definición Grupo I', pHome: 52, pDraw: 28, pAway: 20 },
+    { time: 'Hoy · Finalizado', hId: 'TUR', hFlag: '🇹🇷', hName: 'Turquía', aId: 'USA', aFlag: '🇺🇸', aName: 'EE.UU.', note: 'Grupo D · Final 3-2', pHome: 42, pDraw: 24, pAway: 34 },
+    { time: 'Hoy · Finalizado', hId: 'PAR', hFlag: '🇵🇾', hName: 'Paraguay', aId: 'AUS', aFlag: '🇦🇺', aName: 'Australia', note: 'Grupo D · Final 0-0', pHome: 28, pDraw: 44, pAway: 28 },
+    { time: 'Hoy · Finalizado', hId: 'JPN', hFlag: '🇯🇵', hName: 'Japón', aId: 'SWE', aFlag: '🇸🇪', aName: 'Suecia', note: 'Grupo F · Final 1-1', pHome: 32, pDraw: 36, pAway: 32 },
+    { time: 'Hoy · Finalizado', hId: 'TUN', hFlag: '🇹🇳', hName: 'Túnez', aId: 'NED', aFlag: '🇳🇱', aName: 'Países Bajos', note: 'Grupo F · Final 1-3', pHome: 15, pDraw: 25, pAway: 60 }
   ];
 
   const contenders = [
