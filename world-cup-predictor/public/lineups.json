@@ -1,128 +1,224 @@
 {
   "ECU": {
     "formation": "4-3-3",
-    "startingXI": ["H. Galíndez", "P. Hincapié", "W. Pacho", "F. Torres", "A. Preciado", "M. Caicedo", "A. Franco", "K. Páez", "J. Sarmiento", "E. Valencia", "K. Rodríguez"],
-    "substitutes": ["A. Domínguez", "J. Ortiz", "J. Cifuentes", "A. Minda", "J. Caicedo"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
+    "startingXI": [
+      "H. Galíndez",
+      "P. Hincapié",
+      "W. Pacho",
+      "F. Torres",
+      "A. Preciado",
+      "M. Caicedo",
+      "A. Franco",
+      "K. Páez",
+      "J. Sarmiento",
+      "E. Valencia",
+      "K. Rodríguez"
+    ],
+    "substitutes": [
+      "A. Domínguez",
+      "J. Ortiz",
+      "J. Cifuentes",
+      "A. Minda",
+      "J. Caicedo"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   },
   "GER": {
     "formation": "4-2-3-1",
-    "startingXI": ["M. ter Stegen", "M. Mittelstädt", "J. Tah", "A. Rüdiger", "J. Kimmich", "T. Kroos", "R. Andrich", "F. Wirtz", "I. Gündogan", "J. Musiala", "K. Havertz"],
-    "substitutes": ["O. Baumann", "N. Schlotterbeck", "D. Raum", "P. Groß", "L. Sané", "N. Füllkrug", "D. Undav"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
+    "startingXI": [
+      "M. ter Stegen",
+      "M. Mittelstädt",
+      "J. Tah",
+      "A. Rüdiger",
+      "J. Kimmich",
+      "T. Kroos",
+      "R. Andrich",
+      "F. Wirtz",
+      "I. Gündogan",
+      "J. Musiala",
+      "K. Havertz"
+    ],
+    "substitutes": [
+      "O. Baumann",
+      "N. Schlotterbeck",
+      "D. Raum",
+      "P. Groß",
+      "L. Sané",
+      "N. Füllkrug",
+      "D. Undav"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   },
   "CAN": {
     "formation": "4-4-2",
-    "startingXI": ["M. Crépeau", "A. Davies", "D. Cornelius", "M. Bombito", "A. Johnston", "J. Shaffelburg", "S. Eustáquio", "I. Koné", "T. Buchanan", "Jonathan David", "C. Larin"],
-    "substitutes": ["D. St. Clair", "K. Miller", "S. Adekugbe", "J. Osorio", "T. Oluwaseyi"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
+    "startingXI": [
+      "M. Crépeau",
+      "A. Davies",
+      "D. Cornelius",
+      "M. Bombito",
+      "A. Johnston",
+      "J. Shaffelburg",
+      "S. Eustáquio",
+      "I. Koné",
+      "T. Buchanan",
+      "Jonathan David",
+      "C. Larin"
+    ],
+    "substitutes": [
+      "D. St. Clair",
+      "K. Miller",
+      "S. Adekugbe",
+      "J. Osorio",
+      "T. Oluwaseyi"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   },
   "SUI": {
     "formation": "5-4-1",
-    "startingXI": ["Y. Sommer", "R. Rodríguez", "M. Akanji", "F. Schär", "L. Stergiou", "S. Widmer", "G. Xhaka", "R. Freuler", "D. Ndoye", "R. Vargas", "B. Embolo"],
-    "substitutes": ["G. Kobel", "C. Zesiger", "X. Shaqiri", "Z. Amdouni", "V. Sierro"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
+    "startingXI": [
+      "Y. Sommer",
+      "R. Rodríguez",
+      "M. Akanji",
+      "F. Schär",
+      "L. Stergiou",
+      "S. Widmer",
+      "G. Xhaka",
+      "R. Freuler",
+      "D. Ndoye",
+      "R. Vargas",
+      "B. Embolo"
+    ],
+    "substitutes": [
+      "G. Kobel",
+      "C. Zesiger",
+      "X. Shaqiri",
+      "Z. Amdouni",
+      "V. Sierro"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   },
   "CUR": {
     "formation": "4-2-3-1",
-    "startingXI": ["E. Room", "S. Floranus", "J. Gaari", "R. Martina", "K. Janga", "V. Anita", "L. Bacuna", "J. Bacuna", "G. Kastaneer", "R. Alberg", "G. Kuwas"],
-    "substitutes": ["T. Bodak", "S. van Eijma", "K. Felida", "Q. Jakoba", "C. Vicento"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
+    "startingXI": [
+      "E. Room",
+      "S. Floranus",
+      "J. Gaari",
+      "R. Martina",
+      "K. Janga",
+      "V. Anita",
+      "L. Bacuna",
+      "J. Bacuna",
+      "G. Kastaneer",
+      "R. Alberg",
+      "G. Kuwas"
+    ],
+    "substitutes": [
+      "T. Bodak",
+      "S. van Eijma",
+      "K. Felida",
+      "Q. Jakoba",
+      "C. Vicento"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   },
   "CIV": {
     "formation": "4-3-3",
-    "startingXI": ["Y. Fofana", "G. Konan", "E. Ndicka", "O. Diomande", "W. Singo", "S. Fofana", "F. Kessié", "I. Sangaré", "S. Adingra", "S. Haller", "N. Pépé"],
-    "substitutes": ["B. Sangaré", "W. Boly", "J. Seri", "K. Kossounou", "K. Konaté", "O. Diakité"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
+    "startingXI": [
+      "Y. Fofana",
+      "G. Konan",
+      "E. Ndicka",
+      "O. Diomande",
+      "W. Singo",
+      "S. Fofana",
+      "F. Kessié",
+      "I. Sangaré",
+      "S. Adingra",
+      "S. Haller",
+      "N. Pépé"
+    ],
+    "substitutes": [
+      "B. Sangaré",
+      "W. Boly",
+      "J. Seri",
+      "K. Kossounou",
+      "K. Konaté",
+      "O. Diakité"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   },
   "BRA": {
     "formation": "4-3-3",
-    "startingXI": ["Alisson", "Wendell", "Marquinhos", "Gabriel Magalhães", "Danilo", "Bruno Guimarães", "João Gomes", "Lucas Paquetá", "Vinícius Júnior", "Rodrygo", "Raphinha"],
-    "substitutes": ["Bento", "Lucas Beraldo", "Andreas Pereira", "Douglas Luiz", "Savinho", "Endrick"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
+    "startingXI": [
+      "Alisson",
+      "Wendell",
+      "Marquinhos",
+      "Gabriel Magalhães",
+      "Danilo",
+      "Bruno Guimarães",
+      "João Gomes",
+      "Lucas Paquetá",
+      "Vinícius Júnior",
+      "Rodrygo",
+      "Raphinha"
+    ],
+    "substitutes": [
+      "Bento",
+      "Lucas Beraldo",
+      "Andreas Pereira",
+      "Douglas Luiz",
+      "Savinho",
+      "Endrick"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   },
   "SCO": {
     "formation": "5-3-2",
-    "startingXI": ["A. Gunn", "A. Robertson", "K. Tierney", "G. Hanley", "J. Hendry", "A. Ralston", "C. McGregor", "B. Gilmour", "S. McTominay", "J. McGinn", "L. Shankland"],
-    "substitutes": ["L. Kelly", "R. Porteous", "K. McLean", "R. Christie", "C. Adams"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
+    "startingXI": [
+      "A. Gunn",
+      "A. Robertson",
+      "K. Tierney",
+      "G. Hanley",
+      "J. Hendry",
+      "A. Ralston",
+      "C. McGregor",
+      "B. Gilmour",
+      "S. McTominay",
+      "J. McGinn",
+      "L. Shankland"
+    ],
+    "substitutes": [
+      "L. Kelly",
+      "R. Porteous",
+      "K. McLean",
+      "R. Christie",
+      "C. Adams"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   },
   "ARG": {
     "formation": "4-3-3",
-    "startingXI": ["E. Martínez", "N. Tagliafico", "N. Otamendi", "C. Romero", "N. Molina", "A. Mac Allister", "E. Fernández", "R. De Paul", "N. González", "L. Martínez", "L. Messi"],
-    "substitutes": ["G. Rulli", "L. Martínez Quarta", "G. Pezzella", "L. Paredes", "G. Lo Celso", "Á. Di María", "J. Álvarez"],
-    "lastUpdated": "2026-06-26T05:40:42.252Z"
-  },
-  "NOR": {
-    "formation": "4-3-3",
-    "startingXI": ["Orjan Nyland", "J. Ryerson", "Leo Östigard", "Andreas Hanche-Olsen", "David Möller Wolfe", "Morten Thorsby", "Patrick Berg", "Martin Ødegaard", "A. Donnum", "Erling Haaland", "Antonio Nusa"],
-    "substitutes": ["Mathias Dyngeland", "Kristoffer Ajer", "Sander Berge", "Jörgen Strand Larsen", "Alexander Sørloth"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "FRA": {
-    "formation": "4-3-3",
-    "startingXI": ["M. Maignan", "Theo Hernández", "W. Saliba", "Dayot Upamecano", "Jules Koundé", "A. Rabiot", "Aurélien Tchouaméni", "N'Golo Kanté", "K. Mbappé", "Marcus Thuram", "Ousmane Dembélé"],
-    "substitutes": ["Brice Samba", "Ibrahima Konaté", "Eduardo Camavinga", "Antoine Griezmann", "Bradley Barcola", "Olivier Giroud"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "SEN": {
-    "formation": "4-3-3",
-    "startingXI": ["Edouard Mendy", "Ismail Jakobs", "Abdou Diallo", "Kalidou Koulibaly", "Formose Mendy", "Pape Gueye", "Lamine Camara", "Pape Matar Sarr", "Sadio Mané", "Nicolas Jackson", "Ismaïla Sarr"],
-    "substitutes": ["Mory Diaw", "Moussa Niakhaté", "Idrissa Gueye", "Nampalys Mendy", "Habib Diallo"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "IRQ": {
-    "formation": "4-2-3-1",
-    "startingXI": ["Jalal Hassan", "Rebin Sulaka", "Saad Natiq", "Hussein Ali", "Ahmed Yahya", "Osama Rashid", "Amir Al-Ammari", "Zidane Iqbal", "Bashar Resan", "Ali Jasim", "Ayman Hussein"],
-    "substitutes": ["Fahad Talib", "Zaid Tahseen", "Ibrahim Bayesh", "Youssef Amyn", "Mohanad Ali"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "TUR": {
-    "formation": "4-2-3-1",
-    "startingXI": ["M. Günok", "Ferdi Kadioglu", "Abdülkerim Bardakci", "Samet Akaydin", "Mert Müldür", "H. Calhanoglu", "Kaan Ayhan", "Kenan Yildiz", "Orkun Kökcü", "Arda Güler", "Baris Alper Yilmaz"],
-    "substitutes": ["U. Cakir", "Merih Demiral", "Okay Yokuslu", "Salih Özcan", "Kerem Aktürkoglu", "Semih Kilicsoy"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "USA": {
-    "formation": "4-3-3",
-    "startingXI": ["Matt Turner", "Antonee Robinson", "Tim Ream", "Chris Richards", "Joe Scally", "Weston McKennie", "Tyler Adams", "Yunus Musah", "Christian Pulisic", "Folarin Balogun", "Timothy Weah"],
-    "substitutes": ["Ethan Horvath", "Miles Robinson", "Johnny Cardoso", "Gio Reyna", "Ricardo Pepi", "Brenden Aaronson"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "PAR": {
-    "formation": "4-2-3-1",
-    "startingXI": ["Carlos Coronel", "Matías Espinoza", "Omar Alderete", "Fabian Balbuena", "Gustavo Velázquez", "Andrés Cubas", "Mathías Villasanti", "Ramón Sosa", "Julio Enciso", "Miguel Almirón", "Alex Arce"],
-    "substitutes": ["Alfredo Aguilar", "Junior Alonso", "Kaku Romero Gamarra", "Hernesto Caballero", "Adam Bareiro"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "AUS": {
-    "formation": "4-4-2",
-    "startingXI": ["Mathew Ryan", "Jordan Bos", "Kye Rowles", "Harry Souttar", "Gethin Jones", "Craig Goodwin", "Jackson Irvine", "Keanu Baccus", "Martin Boyle", "Mitchell Duke", "Kusini Yengi"],
-    "substitutes": ["Joe Gauci", "Connor Metcalfe", "Riley McGree", "Cameron Burgess", "Bruno Fornaroli"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "JPN": {
-    "formation": "4-2-3-1",
-    "startingXI": ["Zion Suzuki", "Hiroki Ito", "Shogo Taniguchi", "Ko Itakura", "Yukinari Sugawara", "Wataru Endo", "Hidemasa Morita", "Kaoru Mitoma", "Takefusa Kubo", "Ritsu Doan", "Ayase Ueda"],
-    "substitutes": ["Keisuke Osako", "Koki Machida", "Ao Tanaka", "Keito Nakamura", "Daizen Maeda"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "SWE": {
-    "formation": "4-3-3",
-    "startingXI": ["Robin Olsen", "Ludwig Augustinsson", "Victor Lindelöf", "Isak Hien", "Emil Krafth", "Jens Cajuste", "Anton Salétros", "Dejan Kulusevski", "Anthony Elanga", "Viktor Gyökeres", "Alexander Isak"],
-    "substitutes": ["Viktor Johansson", "Carl Starfelt", "Samuel Gustafson", "Emil Forsberg", "Gustaf Nilsson"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "TUN": {
-    "formation": "4-3-3",
-    "startingXI": ["Bechir Said", "Ali Abdi", "Montassar Talbi", "Yassine Meriah", "Wajdi Kechrida", "Aïssa Laïdouni", "Ellyes Skhiri", "Hamza Rafia", "Elias Achouri", "Haythem Jouini", "Sayfallah Ltaief"],
-    "substitutes": ["Mouez Hassen", "Alaa Ghram", "Mohamed Ali Ben Romdhane", "Naïm Sliti", "Seifeddine Jaziri"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
-  },
-  "NED": {
-    "formation": "4-3-3",
-    "startingXI": ["Bart Verbruggen", "Nathan Aké", "Virgil van Dijk", "Stefan de Vrij", "Denzel Dumfries", "Joey Veerman", "Jerdy Schouten", "Tijjani Reijnders", "Cody Gakpo", "Memphis Depay", "Xavi Simons"],
-    "substitutes": ["Justin Bijlow", "Micky van de Ven", "Ryan Gravenberch", "Georginio Wijnaldum", "Donyell Malen", "Wout Weghorst"],
-    "lastUpdated": "2026-06-26T18:00:00.000Z"
+    "startingXI": [
+      "E. Martínez",
+      "N. Tagliafico",
+      "N. Otamendi",
+      "C. Romero",
+      "N. Molina",
+      "A. Mac Allister",
+      "E. Fernández",
+      "R. De Paul",
+      "N. González",
+      "L. Martínez",
+      "L. Messi"
+    ],
+    "substitutes": [
+      "G. Rulli",
+      "L. Martínez Quarta",
+      "G. Pezzella",
+      "L. Paredes",
+      "G. Lo Celso",
+      "Á. Di María",
+      "J. Álvarez"
+    ],
+    "lastUpdated": "2026-06-26T16:40:51.493Z"
   }
 }
