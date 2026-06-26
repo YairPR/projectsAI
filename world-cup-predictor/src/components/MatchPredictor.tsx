@@ -5,6 +5,7 @@ import type { ModelWeights, MatchBettingMarkets, MarketOption, LineupData } from
 import { calculateMatchBettingMarkets, probToOdds, calculateTeamRating } from '../utils/simulatorEngine';
 import { mockLineups } from '../data/lineupsMock';
 import { historicalMatches } from '../data/historicalMatches';
+import { tournamentSchedule } from '../data/tournamentSchedule';
 import { 
   Sliders, Activity, AlertCircle, RefreshCw, 
   Search, ShieldAlert, Terminal
@@ -62,14 +63,15 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
   const [jsonInputString, setJsonInputString] = useState<string>('');
   const [showJsonInspector, setShowJsonInspector] = useState<boolean>(false);
 
-  const todayMatches = [
-    { time: 'Hoy · 21:00h', hId: 'NOR', hName: 'Noruega', aId: 'FRA', aName: 'Francia', desc: 'Partidazo Grupo I' },
-    { time: 'Hoy · 21:00h', hId: 'SEN', hName: 'Senegal', aId: 'IRQ', aName: 'Irak', desc: 'Definición Grupo I' },
-    { time: 'Hoy · Finalizado', hId: 'TUR', hName: 'Turquía', aId: 'USA', aName: 'EE.UU.', desc: 'Grupo D · Final 3-2' },
-    { time: 'Hoy · Finalizado', hId: 'PAR', hName: 'Paraguay', aId: 'AUS', aName: 'Australia', desc: 'Grupo D · Final 0-0' },
-    { time: 'Hoy · Finalizado', hId: 'JPN', hName: 'Japón', aId: 'SWE', aName: 'Suecia', desc: 'Grupo F · Final 1-1' },
-    { time: 'Hoy · Finalizado', hId: 'TUN', hName: 'Túnez', aId: 'NED', aName: 'Países Bajos', desc: 'Grupo F · Final 1-3' }
-  ];
+  const getTodayDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const dateStr = getTodayDateString();
+  const todayMatches = tournamentSchedule[dateStr] || tournamentSchedule["2026-06-26"];
 
   const t1 = teamsData.find(t => t.id === team1Id)!;
   const t2 = teamsData.find(t => t.id === team2Id)!;

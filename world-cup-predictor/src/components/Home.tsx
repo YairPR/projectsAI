@@ -1,19 +1,21 @@
 import React from 'react';
 import { Trophy, ArrowRight, ShieldAlert, TrendingUp, Cpu, Award } from 'lucide-react';
+import { tournamentSchedule } from '../data/tournamentSchedule';
 
 interface HomeProps {
   onNavigate: (tab: 'home' | 'dashboard' | 'predictor', matchTeams?: { team1Id: string; team2Id: string }) => void;
 }
 
 export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
-  const todayMatches = [
-    { time: 'Hoy · 21:00h', hId: 'NOR', hFlag: '🇳🇴', hName: 'Noruega', aId: 'FRA', aFlag: '🇫🇷', aName: 'Francia', note: 'Partidazo Grupo I', pHome: 18, pDraw: 22, pAway: 60 },
-    { time: 'Hoy · 21:00h', hId: 'SEN', hFlag: '🇸🇳', hName: 'Senegal', aId: 'IRQ', aFlag: '🇮🇶', aName: 'Irak', note: 'Definición Grupo I', pHome: 52, pDraw: 28, pAway: 20 },
-    { time: 'Hoy · Finalizado', hId: 'TUR', hFlag: '🇹🇷', hName: 'Turquía', aId: 'USA', aFlag: '🇺🇸', aName: 'EE.UU.', note: 'Grupo D · Final 3-2', pHome: 42, pDraw: 24, pAway: 34 },
-    { time: 'Hoy · Finalizado', hId: 'PAR', hFlag: '🇵🇾', hName: 'Paraguay', aId: 'AUS', aFlag: '🇦🇺', aName: 'Australia', note: 'Grupo D · Final 0-0', pHome: 28, pDraw: 44, pAway: 28 },
-    { time: 'Hoy · Finalizado', hId: 'JPN', hFlag: '🇯🇵', hName: 'Japón', aId: 'SWE', aFlag: '🇸🇪', aName: 'Suecia', note: 'Grupo F · Final 1-1', pHome: 32, pDraw: 36, pAway: 32 },
-    { time: 'Hoy · Finalizado', hId: 'TUN', hFlag: '🇹🇳', hName: 'Túnez', aId: 'NED', aFlag: '🇳🇱', aName: 'Países Bajos', note: 'Grupo F · Final 1-3', pHome: 15, pDraw: 25, pAway: 60 }
-  ];
+  const getTodayDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const dateStr = getTodayDateString();
+  const todayMatches = tournamentSchedule[dateStr] || tournamentSchedule["2026-06-26"];
 
   const contenders = [
     { rank: '#1', name: 'España', flag: '🇪🇸', elo: 1820, value: '€980M', prob: 15.2 },
