@@ -1,0 +1,74 @@
+{
+  "ECU-GER": {
+    "status": "HALFTIME",
+    "minute": 45,
+    "score": {
+      "home": 1,
+      "away": 0
+    },
+    "stats": {
+      "possession": { "home": 42, "away": 58 },
+      "shots": { "home": 5, "away": 7 },
+      "shotsOnTarget": { "home": 3, "away": 2 },
+      "corners": { "home": 2, "away": 4 },
+      "fouls": { "home": 8, "away": 6 }
+    },
+    "phase": "Group Stage",
+    "group": "E",
+    "lastUpdated": "2026-06-25T21:50:00.000Z"
+  },
+  "SUI-CAN": {
+    "status": "LIVE",
+    "minute": 75,
+    "score": {
+      "home": 0,
+      "away": 1
+    },
+    "stats": {
+      "possession": { "home": 48, "away": 52 },
+      "shots": { "home": 8, "away": 9 },
+      "shotsOnTarget": { "home": 2, "away": 4 },
+      "corners": { "home": 4, "away": 5 },
+      "fouls": { "home": 11, "away": 9 }
+    },
+    "phase": "Group Stage",
+    "group": "B",
+    "lastUpdated": "2026-06-25T21:52:00.000Z"
+  },
+  "CUR-CIV": {
+    "status": "PRE_MATCH",
+    "minute": 0,
+    "score": {
+      "home": 0,
+      "away": 0
+    },
+    "stats": {
+      "possession": { "home": 0, "away": 0 },
+      "shots": { "home": 0, "away": 0 },
+      "shotsOnTarget": { "home": 0, "away": 0 },
+      "corners": { "home": 0, "away": 0 },
+      "fouls": { "home": 0, "away": 0 }
+    },
+    "phase": "Group Stage",
+    "group": "E",
+    "lastUpdated": "2026-06-25T21:00:00.000Z"
+  },
+  "BRA-SCO": {
+    "status": "FINISHED",
+    "minute": 90,
+    "score": {
+      "home": 3,
+      "away": 1
+    },
+    "stats": {
+      "possession": { "home": 62, "away": 38 },
+      "shots": { "home": 17, "away": 5 },
+      "shotsOnTarget": { "home": 8, "away": 2 },
+      "corners": { "home": 9, "away": 2 },
+      "fouls": { "home": 7, "away": 12 }
+    },
+    "phase": "Group Stage",
+    "group": "C",
+    "lastUpdated": "2026-06-25T21:30:00.000Z"
+  }
+}

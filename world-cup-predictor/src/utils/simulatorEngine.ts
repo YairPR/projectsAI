@@ -339,7 +339,12 @@ export function calculateMatchBettingMarkets(
   messiImpact: number = 0,
   lineupA?: LineupData,
   lineupB?: LineupData,
-  applyGameTheory: boolean = false
+  applyGameTheory: boolean = false,
+  liveMode: boolean = false,
+  currentMinute: number = 0,
+  scoreHome: number = 0,
+  scoreAway: number = 0,
+  _isKnockout: boolean = false
 ): MatchBettingMarkets {
   let ratingA = calculateTeamRating(teamA, weights, teamA.id === 'ARG' ? messiImpact : 0);
   let ratingB = calculateTeamRating(teamB, weights, teamB.id === 'ARG' ? messiImpact : 0);
@@ -458,25 +463,35 @@ export function calculateMatchBettingMarkets(
     xgB = Math.max(0.1, +(xgB * 0.70).toFixed(2));
   }
 
+  // Live in-play remaining time scaling (e.g. 45 mins left at halftime)
+  if (liveMode && currentMinute > 0) {
+    const remainingFraction = Math.max(0.05, (90 - currentMinute) / 90);
+    xgA = +(xgA * remainingFraction).toFixed(2);
+    xgB = +(xgB * remainingFraction).toFixed(2);
+  }
+
   const xgTotal = +(xgA + xgB).toFixed(2);
 
   // 2. Exact score distribution using Poisson (0 to 5 goals)
   let probA = 0;
   let probB = 0;
   let probDraw = 0;
-  let bestScore = { g1: 0, g2: 0, p: 0 };
+  let bestScore = { g1: liveMode ? scoreHome : 0, g2: liveMode ? scoreAway : 0, p: 0 };
   const exactScores: { g1: number; g2: number; p: number }[] = [];
 
   for (let a = 0; a <= 5; a++) {
     for (let b = 0; b <= 5; b++) {
       const p = poissonProbability(xgA, a) * poissonProbability(xgB, b);
-      if (a > b) probA += p;
-      else if (b > a) probB += p;
+      const finalA = a + (liveMode ? scoreHome : 0);
+      const finalB = b + (liveMode ? scoreAway : 0);
+      
+      if (finalA > finalB) probA += p;
+      else if (finalB > finalA) probB += p;
       else probDraw += p;
 
-      exactScores.push({ g1: a, g2: b, p });
+      exactScores.push({ g1: finalA, g2: finalB, p });
       if (p > bestScore.p) {
-        bestScore = { g1: a, g2: b, p };
+        bestScore = { g1: finalA, g2: finalB, p };
       }
     }
   }
@@ -505,13 +520,34 @@ export function calculateMatchBettingMarkets(
   // 3. Over/Under probabilities
   const pOver = (threshold: number): number => {
     let underProb = 0;
-    for (let k = 0; k <= Math.floor(threshold); k++) {
-      underProb += poissonProbability(xgTotal, k);
+    const liveScoreTotal = liveMode ? (scoreHome + scoreAway) : 0;
+    
+    // Sum Poisson probabilities of simulated remaining goals
+    for (let k = 0; k <= 10; k++) {
+      const probTotalK = poissonProbability(xgTotal, k);
+      if (k + liveScoreTotal <= threshold) {
+        underProb += probTotalK;
+      }
     }
-    return Math.max(2, Math.round((1 - underProb) * 100));
+    return Math.max(2, Math.min(98, Math.round((1 - underProb) * 100)));
   };
 
-  const pBtts = Math.max(5, Math.round((1 - Math.exp(-xgA)) * (1 - Math.exp(-xgB)) * 100));
+  // BTTS (Both teams to score) calculations
+  let pBtts = 0;
+  if (liveMode) {
+    if (scoreHome > 0 && scoreAway > 0) {
+      pBtts = 100;
+    } else if (scoreHome > 0) {
+      pBtts = Math.round((1 - Math.exp(-xgB)) * 100);
+    } else if (scoreAway > 0) {
+      pBtts = Math.round((1 - Math.exp(-xgA)) * 100);
+    } else {
+      pBtts = Math.round((1 - Math.exp(-xgA)) * (1 - Math.exp(-xgB)) * 100);
+    }
+  } else {
+    pBtts = Math.round((1 - Math.exp(-xgA)) * (1 - Math.exp(-xgB)) * 100);
+  }
+  pBtts = Math.max(2, Math.min(98, pBtts));
 
   // 4. Corners Calculation
   const avgCornersA = Math.max(2.5, +( (3.5 + ratingA * 4.5 + formModifierA * 2) * formationMultCornersA ).toFixed(1));

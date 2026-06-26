@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Team, Player } from '../data/teamsData';
 import { teamsData } from '../data/teamsData';
 import type { ModelWeights, MatchBettingMarkets, MarketOption, LineupData } from '../utils/simulatorEngine';
-import { calculateMatchBettingMarkets, probToOdds } from '../utils/simulatorEngine';
+import { calculateMatchBettingMarkets, probToOdds, calculateTeamRating } from '../utils/simulatorEngine';
 import { mockLineups } from '../data/lineupsMock';
 import { historicalMatches } from '../data/historicalMatches';
 import { 
@@ -55,6 +55,11 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
   const [customValue1, setCustomValue1] = useState<number>(280);
   const [customValue2, setCustomValue2] = useState<number>(850);
 
+  // Live Match Telemetry states
+  const [liveMatchStats, setLiveMatchStats] = useState<any>(null);
+  const [useLiveMode, setUseLiveMode] = useState<boolean>(false);
+  const [matchPhase, setMatchPhase] = useState<string>('Group Stage');
+
   const todayMatches = [
     { time: 'Hoy · 18:00h', hId: 'ECU', hName: 'Ecuador', aId: 'GER', aName: 'Alemania', desc: 'Partidazo Grupo E' },
     { time: 'Hoy · 21:00h', hId: 'SUI', hName: 'Suiza', aId: 'CAN', aName: 'Canadá', desc: 'Definición Grupo B' },
@@ -79,11 +84,17 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
   useEffect(() => {
     setCustomElo1(t1.fifaPoints);
     setCustomValue1(t1.squadValue);
+    setLiveMatchStats(null);
+    setUseLiveMode(false);
+    setMatchPhase('Group Stage');
   }, [team1Id, t1]);
 
   useEffect(() => {
     setCustomElo2(t2.fifaPoints);
     setCustomValue2(t2.squadValue);
+    setLiveMatchStats(null);
+    setUseLiveMode(false);
+    setMatchPhase('Group Stage');
   }, [team2Id, t2]);
 
   // Initialize lineups
@@ -97,13 +108,22 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
     }
   }, [team1Id, team2Id, useOfficialLineups]);
 
+  // Synchronize matchPhase with liveMatchStats when loaded
+  useEffect(() => {
+    if (liveMatchStats) {
+      setMatchPhase(liveMatchStats.phase || 'Group Stage');
+    } else {
+      setMatchPhase('Group Stage');
+    }
+  }, [liveMatchStats]);
+
   // Recalculate immediately if weights, lineups or custom stats change
   useEffect(() => {
     // Only run if we aren't currently executing a visual data crawl
     if (!isCrawling) {
       calculatePrediction();
     }
-  }, [team1Id, team2Id, sliderForm, sliderSquad, sliderHistory, sliderVenue, sliderWeather, lineupA, lineupB, weights, applyGameTheory, customElo1, customElo2, customValue1, customValue2]);
+  }, [team1Id, team2Id, sliderForm, sliderSquad, sliderHistory, sliderVenue, sliderWeather, lineupA, lineupB, weights, applyGameTheory, customElo1, customElo2, customValue1, customValue2, useLiveMode, matchPhase, liveMatchStats]);
 
   function createDefaultLineup(team: Team): LineupData {
     return {
@@ -144,12 +164,17 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
       0,
       lineupA,
       lineupB,
-      applyGameTheory
+      applyGameTheory,
+      useLiveMode,
+      liveMatchStats ? liveMatchStats.minute : 0,
+      liveMatchStats && liveMatchStats.score ? liveMatchStats.score.home : 0,
+      liveMatchStats && liveMatchStats.score ? liveMatchStats.score.away : 0,
+      matchPhase !== 'Group Stage'
     );
     setMarketsResults(res);
   };
 
-  // Run a real dynamic fetch request for live match lineups
+  // Run a real dynamic fetch request for live match lineups and stats
   const handleCalculateWithCrawling = async () => {
     setIsCrawling(true);
     setConsoleLines([]);
@@ -164,12 +189,13 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
       });
     };
 
-    setCrawlingProgress(15);
-    await logLine('📡 Conectando con base de datos del servidor...', 400);
+    setCrawlingProgress(10);
+    await logLine('📡 Conectando con base de datos del servidor...', 300);
 
-    setCrawlingProgress(35);
-    await logLine('🔍 Solicitando alineaciones oficiales en vivo vía HTTP GET /lineups.json...', 400);
+    setCrawlingProgress(30);
+    await logLine('🔍 Solicitando alineaciones oficiales en vivo vía HTTP GET /lineups.json...', 300);
 
+    // 1. Fetch lineups
     try {
       const response = await fetch('/lineups.json');
       if (response.ok) {
@@ -177,19 +203,19 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
         const lineupAData = data[team1Id];
         const lineupBData = data[team2Id];
         
-        setCrawlingProgress(65);
-        await logLine(`✅ HTTP 200 OK. Mapeando formaciones tácticas para ${t1.name} y ${t2.name}.`, 400);
+        setCrawlingProgress(50);
+        await logLine(`✅ HTTP 200 OK. Mapeando formaciones tácticas para ${t1.name} y ${t2.name}.`, 300);
         
         if (lineupAData) {
           setLineupA(lineupAData);
-          await logLine(`🏃 Opta: Alineación inicial de ${t1.name} cargada (${lineupAData.formation}).`, 300);
+          await logLine(`🏃 Opta: Alineación inicial de ${t1.name} cargada (${lineupAData.formation}).`, 200);
         } else {
           setLineupA(createDefaultLineup(t1));
         }
         
         if (lineupBData) {
           setLineupB(lineupBData);
-          await logLine(`🏃 Opta: Alineación inicial de ${t2.name} cargada (${lineupBData.formation}).`, 300);
+          await logLine(`🏃 Opta: Alineación inicial de ${t2.name} cargada (${lineupBData.formation}).`, 200);
         } else {
           setLineupB(createDefaultLineup(t2));
         }
@@ -197,15 +223,64 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
         throw new Error('HTTP failure');
       }
     } catch (e) {
-      setCrawlingProgress(65);
-      await logLine('⚠️ Error HTTP en canal de alineaciones. Cargando datos de fallback local...', 500);
+      setCrawlingProgress(50);
+      await logLine('⚠️ Error HTTP en canal de alineaciones. Cargando datos de fallback local...', 400);
       setLineupA(mockLineups[team1Id] || createDefaultLineup(t1));
       setLineupB(mockLineups[team2Id] || createDefaultLineup(t2));
     }
 
-    setCrawlingProgress(85);
-    await logLine('📈 Extrayendo valor de plantillas de Transfermarkt y rankings FIFA/ELO...', 400);
-    await logLine('🧮 Ejecutando simulación de Poisson y Monte Carlo (10,000 iteraciones)...', 500);
+    // 2. Fetch live match stats comparison
+    setCrawlingProgress(70);
+    await logLine('🔍 Solicitando telemetría en vivo vía HTTP GET /liveMatchStats.json...', 300);
+    try {
+      const response = await fetch('/liveMatchStats.json');
+      if (response.ok) {
+        const data = await response.json();
+        const matchKey = `${team1Id}-${team2Id}`;
+        const matchKeyAlt = `${team2Id}-${team1Id}`;
+        const matchLiveStats = data[matchKey] || data[matchKeyAlt];
+
+        if (matchLiveStats) {
+          const isAlt = !data[matchKey] && data[matchKeyAlt];
+          const scoreHomeVal = isAlt ? matchLiveStats.score.away : matchLiveStats.score.home;
+          const scoreAwayVal = isAlt ? matchLiveStats.score.home : matchLiveStats.score.away;
+          
+          const adjustedStats = {
+            ...matchLiveStats,
+            score: {
+              home: scoreHomeVal,
+              away: scoreAwayVal
+            }
+          };
+
+          setLiveMatchStats(adjustedStats);
+          
+          // Auto-enable live mode if match is HALFTIME or LIVE
+          if (matchLiveStats.status === 'HALFTIME' || matchLiveStats.status === 'LIVE') {
+            setUseLiveMode(true);
+          } else {
+            setUseLiveMode(false);
+          }
+
+          await logLine(`✅ HTTP 200 OK. Telemetría detectada (Minuto: ${matchLiveStats.minute}', Estado: ${matchLiveStats.status}).`, 300);
+          await logLine(`📊 Marcador en vivo: ${t1.name} ${scoreHomeVal} - ${scoreAwayVal} ${t2.name}.`, 300);
+        } else {
+          setLiveMatchStats(null);
+          setUseLiveMode(false);
+          await logLine('ℹ️ No se detectó telemetría activa (Pre-Partido o sin cobertura en vivo).', 300);
+        }
+      } else {
+        throw new Error('HTTP failure');
+      }
+    } catch (e) {
+      setLiveMatchStats(null);
+      setUseLiveMode(false);
+      await logLine('⚠️ Error HTTP al conectar con canal en vivo. Continuando en modo Pre-Partido.', 400);
+    }
+
+    setCrawlingProgress(90);
+    await logLine('📈 Extrayendo valor de plantillas de Transfermarkt y rankings FIFA/ELO...', 300);
+    await logLine('🧮 Ejecutando simulación de Poisson y Monte Carlo (10,000 iteraciones)...', 400);
     setCrawlingProgress(100);
 
     setTimeout(() => {
@@ -602,6 +677,231 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
             </div>
           </div>
 
+          {/* Live Match Telemetry Dashboard */}
+          {liveMatchStats && (
+            <div className="live-telemetry-dashboard glass-subcard fade-in" style={{
+              background: 'rgba(13, 21, 39, 0.6)',
+              border: '1px solid rgba(0, 242, 254, 0.2)',
+              borderRadius: '12px',
+              padding: '1rem',
+              margin: '0.5rem 0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+              boxShadow: '0 8px 32px 0 rgba(0, 242, 254, 0.05)'
+            }}>
+              {/* Header with status badge and pulsing green/red dot */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className={`live-pulse-dot ${liveMatchStats.status === 'LIVE' ? 'live' : 'halftime'}`} style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: liveMatchStats.status === 'LIVE' ? '#ef4444' : '#fbbf24',
+                    display: 'inline-block',
+                    boxShadow: liveMatchStats.status === 'LIVE' ? '0 0 8px #ef4444' : '0 0 8px #fbbf24'
+                  }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'white', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    {liveMatchStats.status === 'LIVE' ? '🔴 PARTIDO EN VIVO' : 
+                     liveMatchStats.status === 'HALFTIME' ? '🟡 ENTRETIEMPO' : 
+                     liveMatchStats.status === 'FINISHED' ? '⚪ PARTIDO FINALIZADO' : '🔵 PRE-PARTIDO'}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    ({liveMatchStats.minute}')
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                  Opta Telemetry ID: {team1Id}-{team2Id}
+                </div>
+              </div>
+
+              {/* Scoreboard */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '1rem', padding: '0.25rem 0' }}>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'white' }}>{t1.name}</span>
+                </div>
+                <div style={{ 
+                  background: '#080c16', 
+                  border: '1px solid rgba(255,255,255,0.05)', 
+                  padding: '0.25rem 0.75rem', 
+                  borderRadius: '6px', 
+                  fontSize: '1.25rem', 
+                  fontWeight: 800, 
+                  color: 'white', 
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.15em'
+                }}>
+                  {liveMatchStats.score.home} - {liveMatchStats.score.away}
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'white' }}>{t2.name}</span>
+                </div>
+              </div>
+
+              {/* Mode Selectors */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.25rem' }}>
+                <button 
+                  onClick={() => setUseLiveMode(false)}
+                  className={`small-action-btn ${!useLiveMode ? 'active-mode' : ''}`}
+                  style={{
+                    background: !useLiveMode ? 'rgba(0, 242, 254, 0.15)' : 'rgba(255,255,255,0.02)',
+                    border: !useLiveMode ? '1px solid var(--accent-cyan)' : '1px solid rgba(255,255,255,0.05)',
+                    color: !useLiveMode ? '#00f2fe' : 'var(--text-secondary)',
+                    padding: '0.5rem',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  ⏱️ Pre-Match (90m Completo)
+                </button>
+                <button 
+                  onClick={() => setUseLiveMode(true)}
+                  disabled={liveMatchStats.status === 'FINISHED'}
+                  className={`small-action-btn ${useLiveMode ? 'active-mode' : ''}`}
+                  style={{
+                    background: useLiveMode ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255,255,255,0.02)',
+                    border: useLiveMode ? '1px solid #a855f7' : '1px solid rgba(255,255,255,0.05)',
+                    color: useLiveMode ? '#a855f7' : 'var(--text-secondary)',
+                    padding: '0.5rem',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    opacity: liveMatchStats.status === 'FINISHED' ? 0.5 : 1,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  ⚡ Proyección In-Play ({90 - liveMatchStats.minute}m restante)
+                </button>
+              </div>
+
+              {/* Tournament Rules / Phase Selector */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                <label style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Fase y Reglas del Torneo</label>
+                <select 
+                  value={matchPhase}
+                  onChange={(e) => setMatchPhase(e.target.value)}
+                  style={{
+                    background: '#080c16',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: 'white',
+                    padding: '0.35rem',
+                    borderRadius: '4px',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="Group Stage">Fase de Grupos (Con Empate reglamentario)</option>
+                  <option value="Round of 16">Fase Eliminatoria (Prórroga y Penales si empata)</option>
+                </select>
+              </div>
+
+              {/* Stats Progress Bars */}
+              <div className="live-stats-bars flex-col gap-2" style={{ marginTop: '0.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
+                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Telemetría en Vivo (Opta Data)</div>
+                
+                {/* Possession */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'white' }}>
+                    <span>{liveMatchStats.stats.possession.home}% Posesión</span>
+                    <span>{liveMatchStats.stats.possession.away}%</span>
+                  </div>
+                  <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', display: 'flex', overflow: 'hidden' }}>
+                    <div style={{ width: `${liveMatchStats.stats.possession.home}%`, background: 'var(--accent-cyan)' }} />
+                    <div style={{ width: `${liveMatchStats.stats.possession.away}%`, background: '#a855f7' }} />
+                  </div>
+                </div>
+
+                {/* Shots & Shots on Target */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.15rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-secondary)' }}>
+                      <span>Tiros: {liveMatchStats.stats.shots.home}</span>
+                      <span>{liveMatchStats.stats.shots.away}</span>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', display: 'flex', overflow: 'hidden' }}>
+                      {(() => {
+                        const total = liveMatchStats.stats.shots.home + liveMatchStats.stats.shots.away || 1;
+                        const pctHome = (liveMatchStats.stats.shots.home / total) * 100;
+                        return (
+                          <>
+                            <div style={{ width: `${pctHome}%`, background: 'var(--accent-cyan)' }} />
+                            <div style={{ width: `${100 - pctHome}%`, background: '#a855f7' }} />
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-secondary)' }}>
+                      <span>Al Arco: {liveMatchStats.stats.shotsOnTarget.home}</span>
+                      <span>{liveMatchStats.stats.shotsOnTarget.away}</span>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', display: 'flex', overflow: 'hidden' }}>
+                      {(() => {
+                        const total = liveMatchStats.stats.shotsOnTarget.home + liveMatchStats.stats.shotsOnTarget.away || 1;
+                        const pctHome = (liveMatchStats.stats.shotsOnTarget.home / total) * 100;
+                        return (
+                          <>
+                            <div style={{ width: `${pctHome}%`, background: 'var(--accent-cyan)' }} />
+                            <div style={{ width: `${100 - pctHome}%`, background: '#a855f7' }} />
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Corners & Fouls */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.15rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-secondary)' }}>
+                      <span>Córners: {liveMatchStats.stats.corners.home}</span>
+                      <span>{liveMatchStats.stats.corners.away}</span>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', display: 'flex', overflow: 'hidden' }}>
+                      {(() => {
+                        const total = liveMatchStats.stats.corners.home + liveMatchStats.stats.corners.away || 1;
+                        const pctHome = (liveMatchStats.stats.corners.home / total) * 100;
+                        return (
+                          <>
+                            <div style={{ width: `${pctHome}%`, background: 'var(--accent-cyan)' }} />
+                            <div style={{ width: `${100 - pctHome}%`, background: '#a855f7' }} />
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-secondary)' }}>
+                      <span>Faltas: {liveMatchStats.stats.fouls.home}</span>
+                      <span>{liveMatchStats.stats.fouls.away}</span>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', display: 'flex', overflow: 'hidden' }}>
+                      {(() => {
+                        const total = liveMatchStats.stats.fouls.home + liveMatchStats.stats.fouls.away || 1;
+                        const pctHome = (liveMatchStats.stats.fouls.home / total) * 100;
+                        return (
+                          <>
+                            <div style={{ width: `${pctHome}%`, background: 'var(--accent-cyan)' }} />
+                            <div style={{ width: `${100 - pctHome}%`, background: '#a855f7' }} />
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
           {/* Crawler Search Button & simulated Console */}
           <div className="crawler-console-section flex-col gap-2">
             {!isCrawling ? (
@@ -709,6 +1009,57 @@ export const MatchPredictor: React.FC<MatchPredictorProps> = ({
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                     {marketsResults.teamA.name} ({marketsResults.probA}%) | Empate ({marketsResults.probDraw}%) | {marketsResults.teamB.name} ({marketsResults.probB}%)
                   </div>
+
+                  {/* If knockout match, display qualification probabilities */}
+                  {matchPhase !== 'Group Stage' && (
+                    <div style={{ 
+                      marginTop: '0.75rem', 
+                      padding: '0.65rem', 
+                      background: 'rgba(168, 85, 247, 0.05)', 
+                      border: '1px solid rgba(168, 85, 247, 0.15)', 
+                      borderRadius: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.35rem',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ fontSize: '0.65rem', color: '#c084fc', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        🏆 PROYECCIÓN DE CLASIFICACIÓN (TIEMPO EXTRA / PENALES)
+                      </div>
+                      {(() => {
+                        const customWeights = {
+                          fifaRank: weights.fifaRank * (sliderHistory / 70),
+                          gdp: weights.gdp,
+                          population: weights.population,
+                          climate: weights.climate * (sliderWeather / 60),
+                          host: weights.host * (sliderVenue / 55),
+                          squadValue: weights.squadValue * (sliderSquad / 85),
+                          luck: weights.luck * (1.1 - sliderForm / 100)
+                        };
+                        const rA = calculateTeamRating(t1, customWeights, 0) || 0.5;
+                        const rB = calculateTeamRating(t2, customWeights, 0) || 0.5;
+                        const qualA = Math.round(marketsResults.probA + marketsResults.probDraw * (rA / (rA + rB)));
+                        const qualB = 100 - qualA;
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'white', fontWeight: 600 }}>
+                              <span>Clasifica {t1.flag} {t1.name}: {qualA}%</span>
+                              <span>Clasifica {t2.flag} {t2.name}: {qualB}%</span>
+                            </div>
+                            <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', display: 'flex', overflow: 'hidden' }}>
+                              <div style={{ width: `${qualA}%`, background: 'var(--accent-cyan)' }} />
+                              <div style={{ width: `${qualB}%`, background: '#a855f7' }} />
+                            </div>
+                            <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>
+                              La definición por penales se basa en la habilidad relativa (ELO) y de portería de ambas selecciones en situaciones de muerte súbita.
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               )}
 
